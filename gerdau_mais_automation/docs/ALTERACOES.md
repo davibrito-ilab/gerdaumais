@@ -57,4 +57,4 @@ Arquivos em `docs/bdd/features/` são referência; a implementação executável
 | 2026-05-13 | **ALLURE.md:** Opções A/B deploy em detalhe. **Gherkin** alinhado aos specs (`docs/bdd`). |
 | 2026-05-13 | Removida seção “roteiro de vídeo” de `docs/ALLURE.md`. **`docs/ALTERACOES.md` restaurado** após corrupção acidental (histórico condensado; detalhes antigos nos commits). |
 | 2026-05-13 | Adicionado **`LICENSE`** (ISC) na raiz do repositório, alinhado ao campo `"license": "ISC"` em `gerdau_mais_automation/package.json`. |
-| 2026-05-13 | **GitHub:** `docs/GITHUB.md` (Git no Windows, estrutura do monorepo, `git push` com PAT, segredos `CYPRESS_*`, Pages). `README.md` na raiz do workspace; link no `gerdau_mais_automation/README.md`. |
+| 2026-05-13 | **GitHub:** `docs/GITHUB.md` (Git no Windows, estrutura do monorepo, `git push` com PAT, segredos `CYPRESS_*`, Pages). `README.md` na raiz do workspace; link no `gerdau_mais_automation/README.md` e em `docs/ALLURE.md`. **Git:** `git init` na raiz, branch `main`, commit inicial (remoto ainda não configurado — ver `docs/GITHUB.md`). |

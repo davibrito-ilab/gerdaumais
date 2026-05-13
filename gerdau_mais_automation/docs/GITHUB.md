@@ -31,7 +31,15 @@ Confirme no terminal:
 git --version
 ```
 
-Se ainda aparecer “não reconhecido”, reinicie o PC ou adicione manualmente `C:\Program Files\Git\cmd` ao PATH.
+Se o Git estiver instalado mas o comando não for encontrado, tente o executável completo (ajuste a unidade se necessário):
+
+```powershell
+& "${env:ProgramFiles}\Git\cmd\git.exe" --version
+```
+
+Ou adicione `C:\Program Files\Git\cmd` às variáveis de ambiente **Path** (Windows → Configurações → Sistema → Sobre → Configurações avançadas do sistema → Variáveis de ambiente).
+
+Se ainda aparecer “não reconhecido”, reinicie o PC ou reinstale o Git com a opção de PATH citada abaixo.
 
 **Alternativa sem linha de comando:** [GitHub Desktop](https://desktop.github.com/) — permite clonar, commitar e publicar com interface gráfica (use a mesma pasta raiz do projeto).
 
