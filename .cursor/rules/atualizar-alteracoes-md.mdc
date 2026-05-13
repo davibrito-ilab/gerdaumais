@@ -1,0 +1,14 @@
+---
+description: Manter docs/ALTERACOES.md atualizado após cada ajuste no projeto de automação
+alwaysApply: true
+---
+
+# Changelog do projeto (`docs/ALTERACOES.md`)
+
+Sempre que concluir qualquer ajuste neste repositório (código, config, scripts, docs de automação, etc.):
+
+1. Atualize `gerdau_mais_automation/docs/ALTERACOES.md` na mesma sessão, antes de encerrar.
+2. Acrescente uma entrada em **Registro cronológico** com data (AAAA-MM-DD), resumo em 1–3 linhas e arquivos tocados quando fizer sentido.
+3. Se a convenção de manutenção mudar, ajuste a seção **Convenção de manutenção** no topo desse arquivo.
+
+Não é necessário reescrever o histórico antigo inteiro; apenas acrescente o que mudou agora.

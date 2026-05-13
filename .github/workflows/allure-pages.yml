@@ -1,0 +1,111 @@
+# Publica o relatório Allure em GitHub Pages após executar Cypress.
+# Requer: repositório no GitHub, Pages habilitado (Settings → Pages → GitHub Actions),
+# e segredos de ambiente (Settings → Secrets and variables → Actions).
+#
+# URL típica: https://<usuario-ou-org>.github.io/<repositorio>/
+
+name: Allure — publicar painel (GitHub Pages)
+
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: "Suíte npm (gerdau_mais_automation)"
+        required: true
+        default: cy:run:smoke-pr
+        type: choice
+        options:
+          - cy:run:smoke-pr
+          - cy:run:regression-nightly
+          - cy:run
+          - cy:run:p0
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "gerdau_mais_automation/**"
+      - ".github/workflows/allure-pages.yml"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: allure-github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: gerdau_mais_automation/package-lock.json
+
+      - name: Java (Allure)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: npm ci
+        working-directory: gerdau_mais_automation
+        run: npm ci
+
+      - name: Metadados da execução (Allure executor)
+        working-directory: gerdau_mais_automation
+        env:
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        run: |
+          mkdir -p allure-results
+          node -e "require('fs').writeFileSync('allure-results/executor.json', JSON.stringify({name:'GitHub Actions',type:'github',url:process.env.GITHUB_SERVER_URL+'/'+process.env.GITHUB_REPOSITORY,buildOrder:process.env.GITHUB_RUN_NUMBER,buildName:'Run #'+process.env.GITHUB_RUN_NUMBER,buildUrl:process.env.GITHUB_SERVER_URL+'/'+process.env.GITHUB_REPOSITORY+'/actions/runs/'+process.env.GITHUB_RUN_ID,reportName:'Allure Report'}, null, 2))"
+
+      - name: Cypress (gera allure-results)
+        working-directory: gerdau_mais_automation
+        continue-on-error: true
+        env:
+          CYPRESS_username: ${{ secrets.CYPRESS_USERNAME }}
+          CYPRESS_password: ${{ secrets.CYPRESS_PASSWORD }}
+          CYPRESS_emissor: ${{ secrets.CYPRESS_EMISSOR }}
+          CYPRESS_produto: ${{ secrets.CYPRESS_PRODUTO }}
+          CYPRESS_auth_client_id: ${{ secrets.CYPRESS_AUTH_CLIENT_ID }}
+          CYPRESS_auth_client_secret: ${{ secrets.CYPRESS_AUTH_CLIENT_SECRET }}
+        # `inputs` só existe em workflow_dispatch; em push usa smoke por padrão
+        run: npm run ${{ github.event.inputs.suite || 'cy:run:smoke-pr' }}
+
+      - name: Gerar HTML do Allure
+        if: always()
+        working-directory: gerdau_mais_automation
+        run: |
+          npm run allure:generate
+          touch allure-report/.nojekyll
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Enviar artefato do site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: gerdau_mais_automation/allure-report
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

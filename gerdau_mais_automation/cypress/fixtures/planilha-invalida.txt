@@ -1,0 +1,1 @@
+Este arquivo não é uma planilha XLSX válida — usado apenas em teste E2E de rejeição de formato.

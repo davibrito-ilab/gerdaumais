@@ -1,0 +1,17 @@
+# Dependências
+node_modules/
+
+# Cypress — nunca versionar segredos locais
+gerdau_mais_automation/cypress.env.json
+
+# Artefatos de execução
+gerdau_mais_automation/allure-results/
+gerdau_mais_automation/allure-report/
+gerdau_mais_automation/cypress/screenshots/
+gerdau_mais_automation/cypress/videos/
+gerdau_mais_automation/cypress/downloads/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+*.log

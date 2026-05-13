@@ -1,0 +1,10 @@
+{
+  "validUser": {
+    "username": "ilabqa.teste@gmail.com",
+    "password": "iLAB#202604"
+  },
+  "invalidUser": {
+    "username": "usuario.invalido@gmail.com",
+    "password": "SenhaIncorreta123"
+  }
+}

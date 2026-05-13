@@ -1,0 +1,22 @@
+{
+  "name": "gerdau_mais_automation-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "cy:run": "cd gerdau_mais_automation && npm run cy:run",
+    "cy:run:login": "cd gerdau_mais_automation && npm run cy:run:login",
+    "cy:run:compras": "cd gerdau_mais_automation && npm run cy:run:compras",
+    "cy:run:compra-selecionando": "cd gerdau_mais_automation && npm run cy:run:compra-selecionando",
+    "cy:run:p0": "cd gerdau_mais_automation && npm run cy:run:p0",
+    "cy:run:p1": "cd gerdau_mais_automation && npm run cy:run:p1",
+    "cy:run:p1-compras-opcional": "cd gerdau_mais_automation && npm run cy:run:p1-compras-opcional",
+    "cy:run:p0-p1": "cd gerdau_mais_automation && npm run cy:run:p0-p1",
+    "cy:open": "cd gerdau_mais_automation && npm run cy:open",
+    "allure:generate": "cd gerdau_mais_automation && npm run allure:generate",
+    "allure:open": "cd gerdau_mais_automation && npm run allure:open",
+    "allure:serve": "cd gerdau_mais_automation && npm run allure:serve",
+    "allure:report": "cd gerdau_mais_automation && npm run allure:report",
+    "cy:run:allure": "cd gerdau_mais_automation && npm run cy:run:allure",
+    "test": "cd gerdau_mais_automation && npm test"
+  }
+}

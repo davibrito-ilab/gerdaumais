@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Relatório gerencial — Cobertura automação E2E — Gerdau Mais</title>
+  <style>
+    @page { size: A4; margin: 14mm 16mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.35;
+      color: #1a1a1a;
+      margin: 0;
+      padding: 12px 8px 24px;
+    }
+    .doc-header {
+      border-bottom: 3px solid #c41230;
+      padding-bottom: 10px;
+      margin-bottom: 14px;
+    }
+    h1 {
+      font-size: 14pt;
+      margin: 0 0 6px 0;
+      color: #c41230;
+    }
+    .meta { font-size: 9.5pt; color: #444; margin: 4px 0; }
+    .meta strong { color: #111; }
+    .block { margin: 10px 0 14px; padding: 10px 12px; background: #f7f7f7; border-radius: 6px; border-left: 4px solid #333; }
+    .block h2 { font-size: 10pt; margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 0.03em; color: #333; }
+    .block p { margin: 0; }
+    h2.section {
+      font-size: 11.5pt;
+      margin: 18px 0 8px 0;
+      padding: 6px 0;
+      border-bottom: 1px solid #ccc;
+      color: #111;
+    }
+    h3.sub { font-size: 10.2pt; margin: 12px 0 6px 0; color: #333; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 14px;
+      font-size: 9.5pt;
+    }
+    th, td {
+      border: 1px solid #bbb;
+      padding: 6px 8px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th { background: #e8e8e8; font-weight: 600; }
+    .status-ok { background: #e8f5e9; font-weight: 600; color: #1b5e20; }
+    .status-parcial { background: #fff8e1; font-weight: 600; color: #e65100; }
+    .status-pend { background: #fce4ec; font-weight: 600; color: #880e4f; }
+    .page-break { page-break-after: always; }
+    .page-foot {
+      text-align: center;
+      font-size: 9pt;
+      color: #666;
+      margin-top: 12px;
+      padding-top: 8px;
+      border-top: 1px dashed #ccc;
+    }
+    .legenda { font-size: 9pt; margin: 8px 0; }
+    .legenda code { background: #eee; padding: 1px 4px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+  <div class="doc-header">
+    <h1>Checklist de Testes Pré-Deploy &amp; Relatório de Cobertura da Automação E2E</h1>
+    <div class="meta"><strong>Plataforma:</strong> Gerdau Mais (E-commerce)</div>
+    <div class="meta"><strong>Versão do relatório / automação:</strong> Repositório <code>gerdau_mais_automation</code> — package <strong>1.0.0</strong> — Cypress <strong>14.x</strong></div>
+    <div class="meta"><strong>Data de referência:</strong> 13 de maio de 2026</div>
+    <div class="meta"><strong>Responsável (preencher):</strong> _________________________________</div>
+  </div>
+
+  <div class="block">
+    <h2>Descrição</h2>
+    <p>Este documento replica o modelo do checklist pré-deploy utilizado pela Gerdau, com os <strong>dados atualizados</strong> para refletir o que está <strong>coberto pela automação E2E (Cypress)</strong> no repositório atual. Não substitui a validação manual de release: indica, de forma gerencial, onde há <strong>automação estável</strong>, <strong>cobertura parcial</strong> ou <strong>lacuna</strong>.</p>
+  </div>
+
+  <div class="block">
+    <h2>Objetivo</h2>
+    <p>Garantir visibilidade da <strong>estabilidade e escopo da automação</strong> antes de publicações, alinhando negócio, QA e desenvolvimento aos fluxos críticos já implementados em <code>cypress/e2e</code>.</p>
+  </div>
+
+  <p class="legenda"><strong>Legenda — status da automação E2E:</strong>
+    <strong class="status-ok" style="padding:2px 6px;border-radius:4px;">AUTOMATIZADO — OK</strong> cenário coberto por spec e estável na última rodada completa documentada |
+    <strong class="status-parcial" style="padding:2px 6px;border-radius:4px;">PARCIAL</strong> coberto com condição (skip, smoke opcional, fallback de UI) |
+    <strong class="status-pend" style="padding:2px 6px;border-radius:4px;">NÃO AUTOMATIZADO</strong> fora do escopo atual dos testes ou apenas manual/ERP |
+    <strong class="status-parcial" style="padding:2px 6px;border-radius:4px;">DESPRIORIZADO</strong> fora do escopo de produto ou conscientemente não priorizado para automação (vide observações)
+  </p>
+  <p class="legenda"><strong>Evidência de regressão (referência):</strong> execução <code>npx cypress run</code> — <strong>28</strong> specs, <strong>32</strong> testes passando, <strong>1</strong> pendente (skip intencional em vitrine “Mais detalhes” quando o CTA não existe no catálogo).</p>
+
+  <!-- ========== 1 ========== -->
+  <h2 class="section">1. Autenticação e Gestão de Acesso</h2>
+  <p>Garante que apenas usuários legítimos acessem o sistema; fluxos negativos e sessão.</p>
+  <table>
+    <thead>
+      <tr><th>Cenário de teste</th><th>Status (automação)</th><th>Observações</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Validar login federado (Gerdau)</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>auth/login.cy.js</code> — login com credenciais válidas</td></tr>
+      <tr><td>Tentar login com senha incorreta</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>login.cy.js</code> — mensagem / permanência em contexto de auth</td></tr>
+      <tr><td>Tentar login com usuário inexistente / email inválido</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>login.cy.js</code></td></tr>
+      <tr><td>Validações de formulário (campos vazios, só email)</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>login.cy.js</code> — casos adicionais de validação</td></tr>
+      <tr><td>Realizar logout e tentar acessar página protegida</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>auth/logoutProtegida.cy.js</code> — redirecionamento para login</td></tr>
+    </tbody>
+  </table>
+  <div class="page-foot">— 1 de 8 —</div>
+  <div class="page-break"></div>
+
+  <!-- ========== 2 ========== -->
+  <h2 class="section">2. Jornada de Compra — Vitrine</h2>
+  <p>Foco na experiência tradicional de compra e descoberta de produto.</p>
+  <h3 class="sub">2.1 Busca e descoberta de produto</h3>
+  <table>
+    <thead>
+      <tr><th>Cenário de teste</th><th>Status (automação)</th><th>Observações</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Buscar produto por nome / descrição ou SKU no catálogo</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>vitrineBuscaCatalogo.cy.js</code></td></tr>
+      <tr><td>Buscar por termo sem resultados</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>buscaSemResultados.cy.js</code></td></tr>
+      <tr><td>Visualizar “Mais detalhes” do produto</td><td class="status-parcial">PARCIAL</td><td><code>vitrineMaisDetalhes.cy.js</code> — teste dá <strong>skip</strong> se a listagem não expuser o CTA</td></tr>
+    </tbody>
+  </table>
+  <h3 class="sub">2.2 Adição ao carrinho e happy path vitrine</h3>
+  <table>
+    <thead>
+      <tr><th>Cenário de teste</th><th>Status (automação)</th><th>Observações</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Adicionar item via vitrine e finalizar pedido</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>compraPorVitrine.cy.js</code> — até confirmação de pedido enviado</td></tr>
+      <tr><td>Adicionar múltiplos itens via vitrine (várias linhas)</td><td class="status-pend">NÃO AUTOMATIZADO</td><td>E2E atual foca fluxo principal com quantidade ajustável no carrinho; volume multi-SKU dedicado não versionado</td></tr>
+      <tr><td>Mostrar detalhes e adicionar pela página do produto</td><td class="status-parcial">PARCIAL</td><td>Depende do mesmo CTA “detalhes” da vitrine; ver <code>vitrineMaisDetalhes.cy.js</code></td></tr>
+      <tr><td>Validar via painel admin persistência / criação do carrinho</td><td class="status-pend">NÃO AUTOMATIZADO</td><td>Fora do escopo E2E do portal (admin/ERP)</td></tr>
+    </tbody>
+  </table>
+  <h3 class="sub">2.3 Compra selecionando itens (fluxo completo E2E)</h3>
+  <p>Entrada por <strong>Comprar selecionando itens</strong>, rota <code>/search-items</code>, busca por código (<code>Cypress.env('produto')</code>), carrinho e finalização até pedido enviado (<code>fluxoCompra.js</code> / <code>pedido.js</code>).</p>
+  <table>
+    <thead>
+      <tr><th>Cenário de teste</th><th>Status (automação)</th><th>Observações</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Fluxo completo: emissor → selecionando itens → busca por código → carrinho → checkout → pedido enviado</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>compraSelecionandoItens.cy.js</code> (<code>@smoke @critical</code>) — <code>it</code> “Comprar selecionando itens”</td></tr>
+    </tbody>
+  </table>
+  <h3 class="sub">2.4 Compra por histórico — repetir pedido (fluxo completo E2E)</h3>
+  <p>Smoke da rota <strong><code>/repeat-order</code></strong> (lista repetir pedido); se a UI não permitir concluir só por histórico, o spec usa <strong>fallback pelo catálogo</strong> até o mesmo critério de pedido efetivado. <strong>Não</strong> confundir com o módulo <strong>Pedidos</strong> do menu (<code>/orders</code>).</p>
+  <table>
+    <thead>
+      <tr><th>Cenário de teste</th><th>Status (automação)</th><th>Observações</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Fluxo completo: emissor → histórico/repetir pedido → carrinho → checkout → pedido enviado (com fallback)</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>compraPorHistorico.cy.js</code> (<code>@smoke @critical @regression</code>) — <code>it</code> “Comprar Por Histórico”; modal “compra em andamento” tratado em <code>tratarModaisTransientes</code></td></tr>
+    </tbody>
+  </table>
+  <div class="page-foot">— 2 de 8 —</div>
+  <div class="page-break"></div>
+
+  <!-- ========== 3 ========== -->
+  <h2 class="section">3. Jornada de Compra — Planilha</h2>
+  <p>Compra em massa por planilha; modelo, upload e erros.</p>
+  <h3 class="sub">3.1 Modelo e upload</h3>
+  <table>
+    <thead>
+      <tr><th>Cenário de teste</th><th>Status (automação)</th><th>Observações</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Fluxo “Comprar por planilha” com smoke de rota + conclusão de pedido</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>compraPorPlanilha.cy.js</code> — inclui fallback por catálogo quando necessário</td></tr>
+      <tr><td>Validar download do modelo de planilha</td><td class="status-parcial">PARCIAL</td><td><code>planilhaDownloadModelo.cy.js</code> — interação se CTA existir no QA</td></tr>
+      <tr><td>Upload de planilha com 1 item e validação no carrinho</td><td class="status-parcial">PARCIAL</td><td>Sem fixture XLSX fixa no fluxo principal; conclusão frequentemente via catálogo no E2E atual</td></tr>
+      <tr><td>Upload com múltiplos itens</td><td class="status-pend">NÃO AUTOMATIZADO</td><td>Sem spec dedicado com planilha multi-linha versionada</td></tr>
+    </tbody>
+  </table>
+  <h3 class="sub">3.2 Cenários de erro no upload</h3>
+  <table>
+    <thead>
+      <tr><th>Cenário de teste</th><th>Status (automação)</th><th>Observações</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Upload com SKU/código inexistente</td><td class="status-pend">NÃO AUTOMATIZADO</td><td>Cenário negativo específico não isolado em spec</td></tr>
+      <tr><td>Upload com colunas faltando ou fora de ordem</td><td class="status-pend">NÃO AUTOMATIZADO</td><td>—</td></tr>
+      <tr><td>Upload de arquivo com formato incorreto (.txt, .png etc.)</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>planilhaUploadArquivoInvalido.cy.js</code> + fixture <code>planilha-invalida.txt</code></td></tr>
+    </tbody>
+  </table>
+  <div class="page-foot">— 3 de 8 —</div>
+  <div class="page-break"></div>
+
+  <!-- ========== 4 ========== -->
+  <h2 class="section">4. Carrinho e Finalização de Pedido</h2>
+  <p>Edição, checkout e integridade até envio do pedido.</p>
+  <h3 class="sub">4.1 Edição no carrinho</h3>
+  <table>
+    <thead>
+      <tr><th>Cenário de teste</th><th>Status (automação)</th><th>Observações</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Alterar quantidade de um item</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>carrinhoQuantidade.cy.js</code> (AUT-009)</td></tr>
+      <tr><td>Alterar unidade de medida / data desejada / destinação / forma de pagamento</td><td class="status-parcial">PARCIAL</td><td><code>carrinhoChecklistCampos.cy.js</code> — smoke não bloqueante; preenchimento de datas no fluxo <code>fluxoCompra.js</code></td></tr>
+      <tr><td>Remover item do carrinho</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>carrinhoRemocao.cy.js</code> (AUT-010)</td></tr>
+      <tr><td>Persistência após refresh / após relogin</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>carrinhoPersistencia.cy.js</code>, <code>carrinhoPersistenciaRelogin.cy.js</code> — relogin com regras de sessão documentadas</td></tr>
+    </tbody>
+  </table>
+  <h3 class="sub">4.2 Fluxo de checkout</h3>
+  <table>
+    <thead>
+      <tr><th>Cenário de teste</th><th>Status (automação)</th><th>Observações</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Bloqueio sem emissor</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>compraSemEmissor.cy.js</code></td></tr>
+      <tr><td>Validar tela de revisão e finalizar pedido com sucesso</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>compraFinalizacaoCompleta.cy.js</code>; helpers <code>pedido.js</code> / <code>fluxoCompra.js</code></td></tr>
+      <tr><td>Validar tela “Pedido enviado com sucesso”</td><td class="status-ok">AUTOMATIZADO — OK</td><td>Vários fluxos de compra até mensagem de confirmação</td></tr>
+      <tr><td>Validar via painel admin criação do pedido</td><td class="status-pend">NÃO AUTOMATIZADO</td><td>Admin / ERP fora do escopo E2E atual</td></tr>
+    </tbody>
+  </table>
+  <div class="page-foot">— 4 de 8 —</div>
+  <div class="page-break"></div>
+
+  <h3 class="sub">4.3 Pós-pedido</h3>
+  <table>
+    <thead>
+      <tr><th>Cenário de teste</th><th>Status (automação)</th><th>Observações</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Baixar PDF do pedido e validar dados (conteúdo binário)</td><td class="status-parcial">PARCIAL</td><td>UI valida presença do CTA “Baixar PDF”; validação profunda do PDF não automatizada</td></tr>
+      <tr><td>Verificar pedido em “Meus pedidos”</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>posPedidoMeusPedidosEPdf.cy.js</code> — navegação pós-envio</td></tr>
+      <tr><td>Validar no admin carrinho “Cart Closed”</td><td class="status-pend">NÃO AUTOMATIZADO</td><td>Admin fora do escopo</td></tr>
+    </tbody>
+  </table>
+  <div class="page-foot">— 5 de 8 —</div>
+  <div class="page-break"></div>
+
+  <!-- ========== 5 ========== -->
+  <h2 class="section">5. Testes Gerais e Não Funcionais</h2>
+  <p>Experiência, compatibilidade e integrações.</p>
+  <h3 class="sub">5.1 Responsividade e compatibilidade</h3>
+  <table>
+    <thead>
+      <tr><th>Cenário de teste</th><th>Status (automação)</th><th>Observações</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Mobile / viewports estreitas (responsividade, Responsive Viewer)</td><td class="status-parcial">DESPRIORIZADO</td><td>O Gerdau Mais <strong>não foi preparado para mobile</strong>; automatizar ou manter matriz responsiva completa <strong>não é prioridade</strong>. Os E2E atuais cobrem jornadas em <strong>viewport desktop</strong> (ver <code>cypress.config.js</code>). Evidências pontuais em mobile, se necessárias, ficam para <strong>matriz manual</strong>.</td></tr>
+      <tr><td>Google Chrome</td><td class="status-ok">AUTOMATIZADO — OK</td><td><strong>Navegador padrão</strong> da aplicação e da suíte: execução típica em Electron/Chromium (Cypress); CI local alinhada a Chrome. Scripts com browser explícito, ex.: <code>cy:run:compras:chrome</code>, <code>cy:run:p1</code> (Chrome), <code>cy:run:p0-p1</code>.</td></tr>
+      <tr><td>Firefox, Safari, Microsoft Edge</td><td class="status-pend">NÃO AUTOMATIZADO</td><td><strong>Não são alvo formal</strong> da automação E2E. O portal pode exibir <strong>mensagem orientando o uso do Chrome</strong>; validação nesses navegadores permanece opcional / manual conforme necessidade de negócio.</td></tr>
+    </tbody>
+  </table>
+  <h3 class="sub">5.2 Integrações (validar com Gerdau)</h3>
+  <table>
+    <thead>
+      <tr><th>Cenário de teste</th><th>Status (automação)</th><th>Observações</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Validar integração do pedido no ERP</td><td class="status-pend">NÃO AUTOMATIZADO</td><td>Fora do escopo E2E portal</td></tr>
+    </tbody>
+  </table>
+  <div class="page-foot">— 6 de 8 —</div>
+  <div class="page-break"></div>
+
+  <!-- ========== 6 ========== -->
+  <h2 class="section">6. Outros Módulos com Automação E2E (Portal)</h2>
+  <p>Fluxos de <strong>compra por histórico</strong> e <strong>compra selecionando itens</strong> estão descritos na <strong>seção 2.3 e 2.4</strong>. Abaixo: módulo <strong>Pedidos</strong> do menu, navegação geral e módulos operacionais.</p>
+  <table>
+    <thead>
+      <tr><th>Módulo</th><th>Status (automação)</th><th>Arquivos (principais)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Pedidos — hub /orders, carteira longos, busca, filtros, export, corte/dobra</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>pedidos/*.cy.js</code> — export opcional conforme UI</td></tr>
+      <tr><td>Menu superior (navegação)</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>menuSuperiorCobertura.cy.js</code></td></tr>
+      <tr><td>Finanças — busca</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>financasBusca.cy.js</code></td></tr>
+      <tr><td>Buscar documentos</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>documentosBusca.cy.js</code></td></tr>
+    </tbody>
+  </table>
+  <div class="page-foot">— 7 de 8 —</div>
+  <div class="page-break"></div>
+
+  <!-- ========== 7 ========== -->
+  <h2 class="section">7. Referências técnicas e documentação</h2>
+  <ul style="font-size:10pt;">
+    <li><strong>Guia de cobertura:</strong> <code>docs/GUIA-COBERTURA-AUTOMACAO-E2E.md</code></li>
+    <li><strong>Matriz estratégica (30 cenários):</strong> <code>docs/matriz-cenarios-automacao.md</code></li>
+    <li><strong>Painel de execuções (Allure):</strong> <code>docs/ALLURE.md</code> — local: <code>npm run allure:generate</code> / <code>allure:open</code>; online: GitHub Actions <code>.github/workflows/allure-pages.yml</code> + Pages</li>
+    <li><strong>Comandos úteis:</strong> <code>npm run cy:run</code> (suite completa), <code>npm run cy:run:smoke-pr</code>, <code>npm run cy:run:regression-nightly</code></li>
+  </ul>
+  <p style="font-size:9pt;color:#555;margin-top:16px;">Documento gerado a partir do modelo do checklist pré-deploy (mar/2026) e atualizado com o estado da automação em mai/2026 (incl. alinhamento a feedback de escopo: mobile despriorizado; Chrome como navegador de referência). PDF gerado por impressão headless a partir de <code>relatorio-gerencial-automacao-e2e.html</code> (ex.: <code>relatorio-gerencial-automacao-e2e-2026-05-13.pdf</code>).</p>
+  <div class="page-foot">— 8 de 8 —</div>
+
+</body>
+</html>
