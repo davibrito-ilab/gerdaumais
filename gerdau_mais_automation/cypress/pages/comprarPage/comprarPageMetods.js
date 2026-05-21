@@ -10,6 +10,7 @@ import {
   selecionaComprarSelecionandoAction,
   selecionaComprarPlanilhaAction,
   selecionaComprarHistoricoAction,
+  selecionaComprarCorteEDobraAction,
   clicarEmBotaoInkAction,
 } from "./comprarPageTipoCompraActions";
 import {
@@ -49,6 +50,10 @@ class ComprarPageMetods extends ComprarPage{
 
   selecionaComprarHistorico() {
     selecionaComprarHistoricoAction();
+  }
+
+  selecionaComprarCorteEDobra() {
+    selecionaComprarCorteEDobraAction();
   }
 
   selecionaEmissorCorretamente(emissor = Cypress.env('emissor')) {
@@ -137,7 +142,7 @@ class ComprarPageMetods extends ComprarPage{
   }
 
   adicionarPrimeiroProdutoDaListaAoCarrinho(opts = {}) {
-    const { skipPlanilhaOnce = false } = opts;
+    const { skipPlanilhaOnce = false, skipEmissorRecover = false } = opts;
     const tentarAdicionarNaTelaAtual = () => {
       cy.get('body').then(($body) => {
         const possuiBotaoDireto = $body.find(ADD_TO_CART_SELECTORS).length > 0;
@@ -177,7 +182,7 @@ class ComprarPageMetods extends ComprarPage{
 
       if (!possuiListaProdutos && !possuiBotaoDireto) {
         cy.log('⚠️ Catálogo sem itens visíveis. Tentando fallback em busca de itens.');
-        this.selecionaEmissorCorretamente();
+        if (!skipEmissorRecover) this.selecionaEmissorCorretamente();
         cy.visit('/purchase/long-steel/commerce/search-items');
         aguardarOverlaysInvisiveis(60000);
         tentarBuscaPorCodigo();
@@ -194,7 +199,7 @@ class ComprarPageMetods extends ComprarPage{
 
       if (possuiBotaoAdicionar) return;
 
-      this.selecionaEmissorCorretamente();
+      if (!skipEmissorRecover) this.selecionaEmissorCorretamente();
       cy.visit('/purchase/long-steel/commerce/search-items');
       aguardarBodyVisivel(30000);
       aguardarOverlaysInvisiveis(60000);
@@ -208,7 +213,7 @@ class ComprarPageMetods extends ComprarPage{
         if (!possuiBotaoBusca) {
           if (skipPlanilhaOnce) {
             cy.log('⚠️ Busca sem CTA após planilha; reforça emissor e retorna ao catálogo (sem novo ciclo planilha).');
-            this.selecionaEmissorCorretamente();
+            if (!skipEmissorRecover) this.selecionaEmissorCorretamente();
             cy.visit('/purchase/long-steel/commerce/catalog');
             aguardarOverlaysInvisiveis(60000);
             aguardarBodyVisivel(30000);
@@ -217,7 +222,9 @@ class ComprarPageMetods extends ComprarPage{
           }
           cy.log('⚠️ Produtos indisponíveis em catálogo/busca. Tentando fallback de adição via planilha.');
           cy.visit('/purchase/long-steel/spreadsheet');
-          this.adicionarPrimeiroProdutoAoCarrinhoNaPlanilha();
+          this.adicionarPrimeiroProdutoAoCarrinhoNaPlanilha(Cypress.env('produto') || '106040273', {
+            skipEmissorRecover,
+          });
           return;
         }
         if ($bodyBusca.find(ADD_TO_CART_SELECTORS).length > 0) {
@@ -236,7 +243,7 @@ class ComprarPageMetods extends ComprarPage{
     cy.screenshot('primeiroProdutoAdicionado');
   }
 
-  adicionarPrimeiroProdutoAoCarrinhoNaPlanilha(codigoFallback = '106040273') {
+  adicionarPrimeiroProdutoAoCarrinhoNaPlanilha(codigoFallback = '106040273', _opts = {}) {
     cy.log('⏳ Aguardando etapa de seleção de produtos na planilha');
     aguardarBodyVisivel(60000);
     aguardarOverlaysInvisiveis(60000);
@@ -282,7 +289,10 @@ class ComprarPageMetods extends ComprarPage{
 
       cy.log('⚠️ Sem botões de adição na planilha. Aplicando fallback para catálogo.');
       cy.visit('/purchase/long-steel/commerce/catalog');
-      this.adicionarPrimeiroProdutoDaListaAoCarrinho({ skipPlanilhaOnce: true });
+      this.adicionarPrimeiroProdutoDaListaAoCarrinho({
+        skipPlanilhaOnce: true,
+        skipEmissorRecover: true,
+      });
     });
 
     assertTextoConfirmacaoCarrinho('produto adicionado ao carrinho na planilha');

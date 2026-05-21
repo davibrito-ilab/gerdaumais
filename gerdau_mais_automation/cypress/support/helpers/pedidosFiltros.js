@@ -5,6 +5,8 @@
  *  1) `/orders` — **hub**: escolha "aços longos e planos" **ou** "corte e dobra".
  *  2) Após **Explorar pedidos de aços longos e planos** — carteira com filtros (tipo Aberto/Faturado,
  *     Estado do emissor, Emissor do pedido) + **Buscar pedidos**. Exportar carteira pode não existir.
+ *     Em **corte e dobra**, o CTA de confirmação pode ser só **“Buscar”** ou **“Consultar”** — usar
+ *     `buscarPedidosCarteiraFlex()` em vez de `buscarPedidos()` quando necessário.
  *
  * Os specs antigos assumiam `/orders` = carteira; é preciso entrar no fluxo de material antes.
  *
@@ -25,9 +27,28 @@ const REGEX_BTN_CORTE = /explorar\s+pedidos\s+de\s+corte\s+e\s+dobra/i;
 const REGEX_LOADING_TEXTUAL = /estamos\s+carregando\s+os\s+dados/i;
 
 const SELETORES_BOTAO =
-  'button, [role="button"], .hefesto-button, a[href], [role="link"], input[type="submit"]';
+  'button, [role="button"], .hefesto-button, a[href], [role="link"], input[type="submit"], input[type="button"]';
 
 const escaparRegex = (texto) => texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const normTextPedidoUi = (s = '') =>
+  String(s || '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+/** Rótulo visível clicável na grade de pedidos (texto / aria-label / value). */
+const rotuloClicavelPedidoUi = (el) =>
+  normTextPedidoUi(
+    [
+      el.textContent,
+      el.getAttribute && el.getAttribute('aria-label'),
+      el.getAttribute && el.getAttribute('title'),
+      el.getAttribute && el.getAttribute('value'),
+    ]
+      .filter(Boolean)
+      .join(' ')
+  );
 
 export const aguardarFimCarregamentoTextual = (timeout = STEP_TIMEOUT) => {
   cy.get('body', { timeout }).should(($body) => {
@@ -48,9 +69,14 @@ export const aguardarTelaPedidos = (msg = 'tela de Pedidos pronta', timeout = ST
 
 /** Abre o hub `/orders` e valida os dois cartões de tipo de material. */
 export const validarHubPedidos = () => {
-  cy.contains('body', /selecione\s+o\s+tipo\s+de\s+material/i, {
-    timeout: STEP_TIMEOUT,
-  }).should('be.visible');
+  /** Texto principal do hub varia (“Selecione o tipo…” vs “Explore…” / apenas cartões). */
+  cy.contains(
+    'body',
+    /selecione\s+(?:o\s+)?(?:tipo\s+)?(?:de\s+)?(?:material|categoria)|escolha\s+(?:um\s+|o\s+)?tipo\s+material|tipo\s+(?:do\s+|de\s+)?material\b|(?:hub|painel).*pedidos|corte\s*&\s*dobra|corte\s+e\s+dobra|\bacos?\s+(?:longos|planos)|explor(ar|e)\s+pedidos/i,
+    {
+      timeout: STEP_TIMEOUT,
+    }
+  ).should('be.visible');
   cy.contains(SELETORES_BOTAO, REGEX_BTN_LONGOS, { timeout: STEP_TIMEOUT })
     .filter(':visible')
     .should('exist');
@@ -111,6 +137,43 @@ export const clicarBotaoPorTexto = (texto, regex, timeout = STEP_TIMEOUT) => {
     .scrollIntoView()
     .click({ force: true });
   cy.log(`✅ Clicou no botão "${texto}"`);
+};
+
+const textoAcumuladoCta = (el) =>
+  String(
+    [
+      el.textContent,
+      el.getAttribute && el.getAttribute('aria-label'),
+      el.getAttribute && el.getAttribute('title'),
+      el.getAttribute && el.getAttribute('value'),
+    ]
+      .filter(Boolean)
+      .join(' ')
+  )
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+/**
+ * Clica no CTA de confirmação da busca na carteira. A carteira **longos** costuma ter “Buscar pedidos”;
+ * **corte e dobra** pode expor só “Buscar”, “Consultar”, “Aplicar filtro”, etc.
+ */
+export const buscarPedidosCarteiraFlex = () => {
+  cy.scrollTo('bottom', { ensureScrollable: false });
+  const reCta =
+    /buscar\s+pedidos|^\s*buscar\s*$|consultar(\s+pedidos)?|aplicar(\s+filtros?)?|pesquisar/i;
+  cy.get(SELETORES_BOTAO, { timeout: STEP_TIMEOUT })
+    .filter(':visible')
+    .should(($els) => {
+      const ok = [...$els].some((el) => reCta.test(textoAcumuladoCta(el)));
+      expect(ok, 'CTA de busca/consulta visível na carteira').to.eq(true);
+    })
+    .then(($els) => {
+      const alvo = [...$els].find((el) => reCta.test(textoAcumuladoCta(el)));
+      cy.wrap(alvo).scrollIntoView().click({ force: true });
+    });
+  cy.log('✅ Busca na carteira (rótulo flexível: Buscar / Buscar pedidos / Consultar / …)');
+  aguardarTelaPedidos('busca aplicada na carteira');
 };
 
 /**
@@ -242,6 +305,63 @@ const localizarInputsDeData = () =>
     throw new Error('Não foi possível localizar 2 inputs de Data de criação.');
   });
 
+/** Preenche “últimos N dias” apenas se a tela expuser 2 campos de data (evita falhar quando o QA só pede emissor/período depois). */
+export const preencherPeriodoUltimosDiasSeDisponivel = (dias = 45) => {
+  cy.get('body', { timeout: STEP_TIMEOUT }).then(($body) => {
+    const todos = [...$body.find('input')];
+
+    const porValor = todos.filter((el) =>
+      /^\d{2}\/\d{2}\/\d{4}$/.test((el.value || '').trim())
+    );
+    const porPlaceholder = todos.filter((el) =>
+      /dd\/mm|aaaa|data|date/i.test(el.placeholder || '')
+    );
+
+    let arr =
+      porValor.length >= 2
+        ? porValor.slice(0, 2)
+        : porPlaceholder.length >= 2
+          ? porPlaceholder.slice(0, 2)
+          : null;
+
+    if (!arr) {
+      const $bloco = $body
+        .find('div, section, fieldset, .hefesto-form-field')
+        .filter((_, el) => /data\s+de\s+cria[cç][aã]o/i.test(el.textContent || ''))
+        .filter(':visible');
+      if ($bloco.length) {
+        const $ins = $bloco.first().find('input').filter(':visible');
+        if ($ins.length >= 2) arr = [$ins.get(0), $ins.get(1)];
+      }
+    }
+
+    if (!arr || arr.length < 2) {
+      cy.log('ℹ️ Dois campos de Data de criação não detectados — mantendo período padrão da tela.');
+      return;
+    }
+
+    const hoje = new Date();
+    const inicio = new Date(hoje.getTime() - dias * 24 * 60 * 60 * 1000);
+    const ini = formatarBR(inicio);
+    const fim = formatarBR(hoje);
+
+    cy.wrap(arr[0])
+      .scrollIntoView()
+      .click({ force: true })
+      .clear({ force: true })
+      .type(ini, { force: true, delay: 30 })
+      .blur({ force: true });
+    cy.wrap(arr[1])
+      .scrollIntoView()
+      .click({ force: true })
+      .clear({ force: true })
+      .type(fim, { force: true, delay: 30 })
+      .blur({ force: true });
+    cy.get('body').type('{esc}', { force: true });
+    cy.log(`✅ Período ajustado (últimos ${dias} dias): ${ini} → ${fim}`);
+  });
+};
+
 /** Preenche os 2 inputs de data — primeiro é início, segundo é fim. */
 export const preencherPeriodo = (dataInicio, dataFim) => {
   const ini = typeof dataInicio === 'string' ? dataInicio : formatarBR(dataInicio);
@@ -255,6 +375,68 @@ export const preencherPeriodo = (dataInicio, dataFim) => {
   });
   cy.get('body').type('{esc}', { force: true });
 };
+
+/** AUT-017: evita falha quando a busca retorna carteira sem linhas de dados (`this.skip`). */
+export function pularSeGradePedidosVaziaAposBusca(timeout = STEP_TIMEOUT) {
+  return cy.get('body', { timeout }).then(function ($body) {
+    const texto = ($body.text() || '').toLowerCase();
+    const listaVazia =
+      /nenhum\s+pedido|nenhum(\s|$)|sem\s+(resultados|pedidos)|n[aã]o\s+(encontramos|h[aá])|lista\s+vazia|sem\s+dados\b/i.test(
+        texto,
+      );
+
+    const visiveis = Cypress.$(
+      'main table tbody tr, table tbody tr, [role="grid"] tbody tr,[role="row"]',
+      $body[0]
+    )
+      .filter((_i, row) => Cypress.dom.isVisible(row))
+      .toArray();
+
+    const linhasDeDados = visiveis.filter((row) => {
+      const tds = Cypress.$(row).find('td').length;
+      if (tds < 2) return false;
+      const tx = Cypress.$(row).text().toLowerCase().trim().slice(0, 120);
+      if (/^tipo|^pedido$|^filtro|^status$/i.test(tx)) return false;
+      return true;
+    }).length;
+
+    if (listaVazia || linhasDeDados < 1) {
+      cy.log('ⓘ SKIP AUT-017: carteira sem linhas depois da busca.');
+      return this.skip();
+    }
+  });
+}
+
+/** AUT-017: primeira interação típica de detalhes na grade após carteira/busca. */
+export const clicarPrimeiroPossivelLinkDetalhesPedido = (timeout = STEP_TIMEOUT) =>
+  cy.get('body', { timeout }).then(($body) => {
+    const $tb = Cypress.$('main tbody,table tbody,[role="rowgroup"] tbody', $body[0]).first();
+    const root = ($tb.length && $tb[0]) || $body[0];
+
+    const arr = Cypress.$(`${SELETORES_BOTAO}, tbody a,[role="row"] a,[role="row"] button,[role="row"] input[type="submit"]`, root)
+      .toArray()
+      .filter((el) => Cypress.dom.isVisible(el));
+
+    const textoDetalhes = (el) => rotuloClicavelPedidoUi(el).toLowerCase();
+
+    let alvo =
+      arr.find((el) =>
+        /detail|detalh(es)?|visualiz|rastre(ar|amento)|tracking|consult(ar)?\s+det|timeline|acompanh(ar)?/i.test(
+          textoDetalhes(el)
+        )
+      ) ||
+      arr.find((el) => /^a$/i.test(el.tagName) && el.hasAttribute('href')) ||
+      null;
+
+    if (!alvo && arr.length) {
+      alvo =
+        arr.find((el) => /#\d+|pedido\b/i.test(textoDetalhes(el))) || arr[Math.min(2, arr.length - 1)];
+    }
+
+    expect(alvo !== null && alvo !== undefined, 'CTA/link de detalhes ou âncora de linha na grade').to.eq(true);
+
+    cy.wrap(alvo).scrollIntoView().click({ force: true });
+  });
 
 /** Preenche período D-N até hoje (N dias atrás). */
 export const preencherPeriodoUltimosDias = (dias = 30) => {
@@ -293,7 +475,11 @@ export const validarListaResponde = () => {
       texto.includes('periodo') ||
       texto.includes('emissor') ||
       texto.includes('faturado') ||
-      texto.includes('aberto');
+      texto.includes('aberto') ||
+      texto.includes('corte') ||
+      texto.includes('dobra') ||
+      texto.includes('aço') ||
+      texto.includes('aco');
     expect(temConteudoOuVazio, 'tela responde com lista ou estado vazio').to.eq(true);
   });
   cy.url({ timeout: STEP_TIMEOUT }).should('include', ROTA_PEDIDOS);

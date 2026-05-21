@@ -1,5 +1,9 @@
 import GerdauHeader from "../gerdauHeader/gerdauHeader";
-import { SEARCH_PRODUCT_INPUT_SELECTORS } from "./comprarPageHelpers";
+import {
+  ADD_TO_CART_SELECTORS,
+  REGEX_CTA_DETALHES_LISTAGEM,
+  SEARCH_PRODUCT_INPUT_SELECTORS,
+} from "./comprarPageHelpers";
 
 class ComprarPage extends GerdauHeader{
 
@@ -33,8 +37,24 @@ class ComprarPage extends GerdauHeader{
       'button[type="submit"], [data-cy*="search-btn"], button[aria-label*="buscar"], button[aria-label*="Buscar"], .hefesto-search__button'
     ).first();
   }
-  get adicionarAoCarrinhoButton() { return cy.get('[data-cy*="add-cart"], button:contains("Adicionar"), .add-to-cart').first(); }
 
+  /** Primeiro add-to-cart visível (usa os mesmos seletores que `comprarPageHelpers` / fluxos de catálogo). */
+  get adicionarAoCarrinhoButton() {
+    return cy.get(ADD_TO_CART_SELECTORS).filter(':visible').first();
+  }
+
+  /** Coleção de CTAs de carrinho visíveis (útil para card/lista com vários itens). */
+  get botoesAdicionarCarrinhoVisiveis() {
+    return cy.get(ADD_TO_CART_SELECTORS).filter(':visible');
+  }
+
+  /** Primeiro “Mais detalhes” / equivalente na listagem de vitrine. */
+  get ctaMaisDetalhesListagemVisivel() {
+    return cy
+      .contains('a, button, [role="button"], span', REGEX_CTA_DETALHES_LISTAGEM, { timeout: 30000 })
+      .filter(':visible')
+      .first();
+  }
 }
 
 export default ComprarPage;

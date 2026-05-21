@@ -31,8 +31,6 @@ describe('Compra sem emissor', () => {
     });
 
     allure.step('Tenta clicar em "Comprar por Vitrine" sem emissor selecionado', () => {
-      // Tenta clicar; se o botão estiver desabilitado o clique com `force:true` é absorvido
-      // sem navegação, e o teste valida que a URL permanece na landing.
       cy.contains('button, [role="button"], .hefesto-button', /comprar\s+por\s+vitrine/i, {
         timeout: STEP_TIMEOUT,
       })
@@ -58,14 +56,11 @@ describe('Compra sem emissor', () => {
         });
       });
     });
+  });
 
-    allure.step(`Seleciona emissor "${EMISSOR_ESPERADO}" e efetiva compra ponta a ponta`, () => {
-      // Caso o clique anterior tenha mudado a URL, volta para a landing.
-      cy.url({ timeout: STEP_TIMEOUT }).then((urlAtual) => {
-        if (!urlAtual.includes(ROTA_COMPRAR_LANDING)) {
-          cy.visit(ROTA_COMPRAR_LANDING);
-        }
-      });
+  it('@regression @p2 Compra efetiva após selecionar emissor na landing', () => {
+    allure.step(`Seleção "${EMISSOR_ESPERADO}" + vitrine + envio`, () => {
+      acessarComprarLanding();
       selecionarEmissorDoPedido(EMISSOR_ESPERADO);
       aguardarTela('emissor confirmado, cards habilitados');
 

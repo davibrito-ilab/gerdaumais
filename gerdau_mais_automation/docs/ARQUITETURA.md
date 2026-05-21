@@ -32,7 +32,8 @@ Responsável por:
 Observação:
 - a classe `comprarPageMetods.js` ainda é o ponto de entrada principal usado pelos specs.
 - já foi iniciada modularização interna com:
-  - `comprarPageHelpers.js` (constantes e asserts reutilizáveis)
+  - `comprarPageHelpers.js` (constantes e asserts reutilizáveis — ex.: **`ADD_TO_CART_SELECTORS`**, **`REGEX_CTA_DETALHES_LISTAGEM`**)
+  - `comprarPage.js` (base `ComprarPage`): busca produto no catálogo, CTAs de **adicionar ao carrinho** e **“mais detalhes”**, alinhados aos mesmos seletores do helper
   - `comprarPageTipoCompraActions.js` (ações de navegação por tipo de compra)
   - `comprarPageCarrinhoBuscaActions.js` (ações de carrinho e busca)
   - `comprarPageEmissorActions.js` (seleção de emissor e fallback de dropdown/lista)
@@ -43,7 +44,7 @@ Observação:
 Responsável por:
 - comandos customizados (`commands.js`)
 - setup global (`e2e.js`)
-- helpers reutilizáveis (`helpers/auth.js`)
+- helpers reutilizáveis (`helpers/auth.js`, **`helpers/fluxoCompra.js`** — landing/emissor, catálogo com contexto, carrinho, preenchimento de **datas desejadas**, modais, CTAs **Avançar/Finalizar** incl. `value` em `<input>`; **`helpers/pedido.js`** onde aplicável)
 
 ### 4. Camada de Configuração (`cypress.config.js` + `cypress.env.json`)
 
@@ -60,6 +61,15 @@ Responsável por:
 - Priorização por risco: scripts P0/P1 no `package.json`.
 - Segurança: segredos fora do código-fonte.
 - **Relatório de execuções:** Allure (`allure-results` → `allure-report`); ver [`docs/ALLURE.md`](./ALLURE.md).
+- **Pedidos (`/orders`):** helpers em `support/helpers/pedidosFiltros.js` (hub, carteiras, filtros, período condicional, busca).
+
+## Inventário E2E (sincronizado com docs)
+
+| Métrica | Valor |
+|--------|--------|
+| Arquivos `*.cy.js` em `cypress/e2e` | **40** |
+| Blocos `it(` | **55** *(auditado em 2026-05-21)* |
+| Lista canônica + evidência QA | [`RELATORIO-AUTOMACAO-E2E-TEXTO-COMPLETO.md`](./RELATORIO-AUTOMACAO-E2E-TEXTO-COMPLETO.md), [`CHECKLIST-PRE-DEPLOY-COBERTURA-AUTOMACAO-E2E.md`](./CHECKLIST-PRE-DEPLOY-COBERTURA-AUTOMACAO-E2E.md) |
 
 ## Recomendações de evolução (boas práticas de mercado)
 

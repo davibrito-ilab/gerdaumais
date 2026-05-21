@@ -73,7 +73,7 @@
     <h1>Checklist de Testes Pré-Deploy &amp; Relatório de Cobertura da Automação E2E</h1>
     <div class="meta"><strong>Plataforma:</strong> Gerdau Mais (E-commerce)</div>
     <div class="meta"><strong>Versão do relatório / automação:</strong> Repositório <code>gerdau_mais_automation</code> — package <strong>1.0.0</strong> — Cypress <strong>14.x</strong></div>
-    <div class="meta"><strong>Data de referência:</strong> 13 de maio de 2026</div>
+    <div class="meta"><strong>Data de referência:</strong> 19 de maio de 2026</div>
     <div class="meta"><strong>Responsável (preencher):</strong> _________________________________</div>
   </div>
 
@@ -93,7 +93,10 @@
     <strong class="status-pend" style="padding:2px 6px;border-radius:4px;">NÃO AUTOMATIZADO</strong> fora do escopo atual dos testes ou apenas manual/ERP |
     <strong class="status-parcial" style="padding:2px 6px;border-radius:4px;">DESPRIORIZADO</strong> fora do escopo de produto ou conscientemente não priorizado para automação (vide observações)
   </p>
-  <p class="legenda"><strong>Evidência de regressão (referência):</strong> execução <code>npx cypress run</code> — <strong>28</strong> specs, <strong>32</strong> testes passando, <strong>1</strong> pendente (skip intencional em vitrine “Mais detalhes” quando o CTA não existe no catálogo).</p>
+  <p class="legenda"><strong>Rodada QA <code>npm run cy:run:fast</code> (2026-05-21, Electron headless):</strong> <strong>55</strong> casos <code>it</code> em ~54m30s — <strong>27</strong> passing, <strong>24</strong> failing, <strong>4</strong> pending (<code>exit_code</code> 24); <strong>19/40</strong> specs sem falhas. Destaques de diagnóstico: <code>compraPorVitrine</code> (ícone carrinho / <code>irParaCarrinhoViaHeader</code>), carrinhos P0/P1 em bloco compras, fluxos dependentes de emissor disponível.</p>
+  <p class="legenda"><strong>Inventário repositório (docs 2026-05-21):</strong> <strong>40</strong> arquivos spec e <strong>55</strong> casos <code>it</code>; destaques: <strong>AUT-017</strong> (<code>pedidosDetalhePedido.cy.js</code> — <code>skip</code> se grade vazia), <strong>AUT-018</strong> (2º <code>it</code> em <code>documentosBusca.cy.js</code>), <strong>AUT-052</strong> (<code>navegacaoCruzadaComprasPedidos.cy.js</code>), desacoplamento smoke/E2E em <code>buscaSemResultados.cy.js</code> e <code>compraSemEmissor.cy.js</code>, CTA final + <code>data-testid</code> em <code>fluxoCompra.js</code>; inventário anterior (38/50) permanece como linha de base histórica. Os números executados (“pass/fail”) abaixo referem-se a rodadas pontuais no QA.</p>
+
+  <p class="legenda"><strong>Histórico (antes de 2026-05-21):</strong> rodadas antigas (<code>cypress run --headed --browser chrome</code>, contagens menores que o inventário atual) serviam só como linha de base; **métricas atuais** do repositório: <strong>40</strong> specs / <strong>55</strong> <code>it</code>; **suíte completa QA** vide parágrafo anterior (<strong>2026-05-21</strong>). Ainda há até <strong>3</strong> pendências esperadas por UI: <code>vitrineMaisDetalhes.cy.js</code> (até 2×) e <code>vitrineFiltroCatalogoFamilia.cy.js</code> (1×).</p>
 
   <!-- ========== 1 ========== -->
   <h2 class="section">1. Autenticação e Gestão de Acesso</h2>
@@ -124,7 +127,8 @@
     <tbody>
       <tr><td>Buscar produto por nome / descrição ou SKU no catálogo</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>vitrineBuscaCatalogo.cy.js</code></td></tr>
       <tr><td>Buscar por termo sem resultados</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>buscaSemResultados.cy.js</code></td></tr>
-      <tr><td>Visualizar “Mais detalhes” do produto</td><td class="status-parcial">PARCIAL</td><td><code>vitrineMaisDetalhes.cy.js</code> — teste dá <strong>skip</strong> se a listagem não expuser o CTA</td></tr>
+      <tr><td>Filtro por categoria ou família no catálogo</td><td class="status-parcial">PARCIAL</td><td><code>vitrineFiltroCatalogoFamilia.cy.js</code> (**AUT-015**) — facetas quando detectadas; senão <strong>skip</strong></td></tr>
+      <tr><td>Visualizar “Mais detalhes” do produto</td><td class="status-parcial">PARCIAL</td><td><code>vitrineMaisDetalhes.cy.js</code> — primeiro <code>it</code> com <strong>skip</strong> se a listagem não expuser o CTA; inclusão no carrinho a partir do detalhe é o segundo <code>it</code> (§2.2)</td></tr>
     </tbody>
   </table>
   <h3 class="sub">2.2 Adição ao carrinho e happy path vitrine</h3>
@@ -134,8 +138,9 @@
     </thead>
     <tbody>
       <tr><td>Adicionar item via vitrine e finalizar pedido</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>compraPorVitrine.cy.js</code> — até confirmação de pedido enviado</td></tr>
-      <tr><td>Adicionar múltiplos itens via vitrine (várias linhas)</td><td class="status-pend">NÃO AUTOMATIZADO</td><td>E2E atual foca fluxo principal com quantidade ajustável no carrinho; volume multi-SKU dedicado não versionado</td></tr>
-      <tr><td>Mostrar detalhes e adicionar pela página do produto</td><td class="status-parcial">PARCIAL</td><td>Depende do mesmo CTA “detalhes” da vitrine; ver <code>vitrineMaisDetalhes.cy.js</code></td></tr>
+      <tr><td>Adicionar múltiplos itens via vitrine (duas inclusões até envio)</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>compraVitrineDoisItens.cy.js</code> — segundo SKU via <code>produto2</code> opcional ou duplicar <code>produto</code></td></tr>
+      <tr><td>Múltiplas inclusões só vitrine (três até envio)</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>compraVitrineTresItens.cy.js</code> — <code>produto2</code>/<code>produto3</code> opcional</td></tr>
+      <tr><td>Mostrar detalhes e adicionar pela página do produto</td><td class="status-parcial">PARCIAL</td><td><code>vitrineMaisDetalhes.cy.js</code> segundo <code>it</code> quando houver inclusão típica; <strong>skip</strong> se não houver CTA de detalhes ou CTAs de inclusão na vista</td></tr>
       <tr><td>Validar via painel admin persistência / criação do carrinho</td><td class="status-pend">NÃO AUTOMATIZADO</td><td>Fora do escopo E2E do portal (admin/ERP)</td></tr>
     </tbody>
   </table>
@@ -157,6 +162,8 @@
     </thead>
     <tbody>
       <tr><td>Fluxo completo: emissor → histórico/repetir pedido → carrinho → checkout → pedido enviado (com fallback)</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>compraPorHistorico.cy.js</code> (<code>@smoke @critical @regression</code>) — <code>it</code> “Comprar Por Histórico”; modal “compra em andamento” tratado em <code>tratarModaisTransientes</code></td></tr>
+      <tr><td>Etapas até <strong>Revisar pedido</strong> pelo histórico (sem efetivar envio)</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>compraHistoricoRevisarPedido.cy.js</code> — sem fallback catálogo na conclusão do fluxo automatizado</td></tr>
+      <tr><td>Pedido enviado apenas pelo fluxo histórico (sem fallback catálogo)</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>compraHistoricoFinalizePedido.cy.js</code> — exige repetir pelo histórico no QA</td></tr>
     </tbody>
   </table>
   <div class="page-foot">— 2 de 8 —</div>
@@ -203,7 +210,8 @@
       <tr><td>Alterar quantidade de um item</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>carrinhoQuantidade.cy.js</code> (AUT-009)</td></tr>
       <tr><td>Alterar unidade de medida / data desejada / destinação / forma de pagamento</td><td class="status-parcial">PARCIAL</td><td><code>carrinhoChecklistCampos.cy.js</code> — smoke não bloqueante; preenchimento de datas no fluxo <code>fluxoCompra.js</code></td></tr>
       <tr><td>Remover item do carrinho</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>carrinhoRemocao.cy.js</code> (AUT-010)</td></tr>
-      <tr><td>Persistência após refresh / após relogin</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>carrinhoPersistencia.cy.js</code>, <code>carrinhoPersistenciaRelogin.cy.js</code> — relogin com regras de sessão documentadas</td></tr>
+      <tr><td>Persistência após refresh</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>carrinhoPersistencia.cy.js</code> (<code>@regression @p1</code>)</td></tr>
+      <tr><td>Persistência após relogin + recompra até pedido enviado</td><td class="status-parcial">PARCIAL</td><td><code>carrinhoPersistenciaRelogin.cy.js</code> (AUT-012) — ajustes históricos em <code>preencherDatasDesejadasNoCarrinho</code> (<code>fluxoCompra.js</code>); na evidência <strong>2026-05-21</strong> (<code>cy:run:fast</code>) continuou sob falhas do bloco compras/carrinho. Revalidar após rerun.</td></tr>
     </tbody>
   </table>
   <h3 class="sub">4.2 Fluxo de checkout</h3>
@@ -269,7 +277,7 @@
       <tr><th>Módulo</th><th>Status (automação)</th><th>Arquivos (principais)</th></tr>
     </thead>
     <tbody>
-      <tr><td>Pedidos — hub /orders, carteira longos, busca, filtros, export, corte/dobra</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>pedidos/*.cy.js</code> — export opcional conforme UI</td></tr>
+      <tr><td>Pedidos — hub /orders, carteira longos, busca, filtros, export, corte/dobra, <strong>reload hub</strong>, <strong>período+busca</strong></td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>pedidos/*.cy.js</code> (8 arquivos); export opcional conforme UI</td></tr>
       <tr><td>Menu superior (navegação)</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>menuSuperiorCobertura.cy.js</code></td></tr>
       <tr><td>Finanças — busca</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>financasBusca.cy.js</code></td></tr>
       <tr><td>Buscar documentos</td><td class="status-ok">AUTOMATIZADO — OK</td><td><code>documentosBusca.cy.js</code></td></tr>
@@ -283,10 +291,10 @@
   <ul style="font-size:10pt;">
     <li><strong>Guia de cobertura:</strong> <code>docs/GUIA-COBERTURA-AUTOMACAO-E2E.md</code></li>
     <li><strong>Matriz estratégica (30 cenários):</strong> <code>docs/matriz-cenarios-automacao.md</code></li>
-    <li><strong>Painel de execuções (Allure):</strong> <code>docs/ALLURE.md</code> — local: <code>npm run allure:generate</code> / <code>allure:open</code>; online: GitHub Actions <code>.github/workflows/allure-pages.yml</code> + Pages</li>
+    <li><strong>Painel de execuções (Allure):</strong> <code>docs/ALLURE.md</code> — local: <code>npm run allure:generate</code> / <code>allure:open</code>; online: <a href="https://davibrito-ilab.github.io/gerdaumais/#" target="_blank" rel="noopener">GitHub Pages (ex.: davibrito-ilab.github.io/gerdaumais)</a> via workflow <code>.github/workflows/allure-pages.yml</code></li>
     <li><strong>Comandos úteis:</strong> <code>npm run cy:run</code> (suite completa), <code>npm run cy:run:smoke-pr</code>, <code>npm run cy:run:regression-nightly</code></li>
   </ul>
-  <p style="font-size:9pt;color:#555;margin-top:16px;">Documento gerado a partir do modelo do checklist pré-deploy (mar/2026) e atualizado com o estado da automação em mai/2026 (incl. alinhamento a feedback de escopo: mobile despriorizado; Chrome como navegador de referência). PDF gerado por impressão headless a partir de <code>relatorio-gerencial-automacao-e2e.html</code> (ex.: <code>relatorio-gerencial-automacao-e2e-2026-05-13.pdf</code>).</p>
+  <p style="font-size:9pt;color:#555;margin-top:16px;">Documento gerado a partir do modelo do checklist pré-deploy (mar/2026) e atualizado com o estado da automação em <strong>mai/2026</strong> (revisão de inventário e evidências <strong>21/05/2026</strong>): mobile despriorizado; navegador de referência típico <strong>Chrome</strong>; suíte <code>cy:run:fast</code> também documentada em <strong>Electron</strong>. PDF: exportar por impressão do navegador a partir deste HTML (nome sugerido: <code>relatorio-gerencial-automacao-e2e-2026-05-21.pdf</code>).</p>
   <div class="page-foot">— 8 de 8 —</div>
 
 </body>

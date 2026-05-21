@@ -3,6 +3,9 @@ import { limparSessao, realizarLoginComRetry } from '../../support/helpers/auth'
 import {
   entrarCarteiraCorteEDobra,
   ROTA_PEDIDOS,
+  buscarPedidosCarteiraFlex,
+  preencherPeriodoUltimosDiasSeDisponivel,
+  validarListaResponde,
 } from '../../support/helpers/pedidosFiltros';
 
 /**
@@ -39,6 +42,26 @@ describe('Pedidos — corte e dobra', () => {
           true
         );
       });
+    });
+  });
+
+  it('@regression @p2 @pedidos Carteira corte/dobra — período (se houver) e busca', { retries: 0 }, () => {
+    allure.step('Abre carteira corte e dobra', () => {
+      entrarCarteiraCorteEDobra();
+    });
+
+    allure.step('Ajusta período quando a UI expõe duas datas', () => {
+      preencherPeriodoUltimosDiasSeDisponivel(45);
+      cy.screenshot('pedidos-corte-dobra-periodo', { capture: 'fullPage' });
+    });
+
+    allure.step('Dispara busca na carteira (rótulos flexíveis)', () => {
+      buscarPedidosCarteiraFlex();
+    });
+
+    allure.step('Valida resposta da listagem', () => {
+      validarListaResponde();
+      cy.screenshot('pedidos-corte-dobra-pos-busca', { capture: 'fullPage' });
     });
   });
 });

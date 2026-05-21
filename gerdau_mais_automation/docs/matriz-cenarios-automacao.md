@@ -134,18 +134,29 @@ Definir cenários de maior valor para automação E2E com foco em risco de negó
 
 ## Execução no repositório
 
+**Referência quantitativa (2026-05-21 — inventário repo + última evidência `cy:run:fast`):** **40** specs / **55** casos `it`. Rodada **Electron** (~54m31s): **27** passing / **24** failing / **4** pending; **AUT-017** (**skip** grade vazia), **AUT-018**, **AUT-052**, checkout em `fluxoCompra.js`, planilha **2 linhas** com modo estrito opcional (`planilha_2_linhas_strict`). Reexecute `npm run cy:run:fast` quando credenciais/QA mudarem.
+
 | Comando (na pasta `gerdau_mais_automation` ou na raiz com `npm run`) | Escopo |
 |----------------------------------------------------------------------|--------|
 | `npm run cy:run` | **Suite completa** — todos os specs (ver [`GUIA-COBERTURA-AUTOMACAO-E2E.md`](./GUIA-COBERTURA-AUTOMACAO-E2E.md)) |
 | `npm run cy:run:smoke-pr` | Smoke PR (login + vitrine + histórico) |
-| `npm run cy:run:regression-nightly` | Regressão noturna (compras P0 + pedidos + menu + finanças + documentos) |
+| `npm run cy:run:regression-nightly` | Regressão noturna (compras P0 + **todos** `pedidos/*.cy.js` + menu + finanças + documentos) |
 | `npm run cy:run:p0` | Smoke crítica (login + compras P0) |
-| `npm run cy:run:p1` | Regressão P1 estável: módulo Pedidos (`pedidosListagem`) |
+| `npm run cy:run:p1` | Módulo Pedidos: **`pedidos/*.cy.js`** (Chrome) — equivalente a `cy:run:pedidos` |
 | `npm run cy:run:p1-compras-opcional` | P1 adicional: carrinho (refresh) e busca sem resultados |
-| `npm run cy:run:p0-p1` | P0 + P1 estável em sequência |
+| `npm run cy:run:p0-p1` | P0 + **`pedidos/*.cy.js`** (Chrome) |
 | `npm run cy:run:auth` | Todos os specs em `auth/` |
 | `npm run cy:run:compras` | Todos os specs em `compras/` |
+| `npm run cy:run:pedidos` | Todos os specs em `pedidos/` (Chrome) |
+
+## Inventário repositório (auditoria código **2026-05-21**)
+
+| Métrica | Valor |
+|---------|-------|
+| Ficheiros `*.cy.js` (`cypress/e2e`) | **40** |
+| Blocos `it(` | **55** |
+| Rastreio spec ↔ cenário/`AUT-*` completo | [`bdd/README.md`](./bdd/README.md) |
 
 ## Próximo passo recomendado
 
-AUT-009 e AUT-010 estão cobertos por `carrinhoQuantidade.cy.js` e `carrinhoRemocao.cy.js`. Para o **inventário completo** dos specs (incl. pedidos, logout, planilha, pós-pedido) e lacunas vs. esta matriz, use o [`GUIA-COBERTURA-AUTOMACAO-E2E.md`](./GUIA-COBERTURA-AUTOMACAO-E2E.md). Cenários P2/P3 ainda sem spec dedicado (ex.: performance formal, sessão expirada simulada) permanecem candidatos a novas iterações ou testes manuais no pré-deploy.
+AUT-009 e AUT-010 estão cobertos por `carrinhoQuantidade.cy.js` e `carrinhoRemocao.cy.js`. **AUT-012** (`carrinhoPersistenciaRelogin.cy.js`): após reforços em `fluxoCompra.js` (carregamento textual + datas), **rodar de novo** a suite completa ou só esse spec para confirmar estabilidade. Para o **inventário completo** dos specs e lacunas vs. esta matriz, use o [`GUIA-COBERTURA-AUTOMACAO-E2E.md`](./GUIA-COBERTURA-AUTOMACAO-E2E.md). Cenários P2/P3 ainda sem spec dedicado permanecem candidatos a novas iterações ou testes manuais no pré-deploy.

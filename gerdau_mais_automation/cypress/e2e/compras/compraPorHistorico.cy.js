@@ -4,6 +4,7 @@ import { limparSessao, realizarLoginComRetry } from '../../support/helpers/auth'
 import {
   STEP_TIMEOUT,
   acessarComprarLanding,
+  acessarCatalogoVitrineComEmissor,
   selecionarEmissorDoPedido,
   clicarBotaoPorTexto,
   aguardarTela,
@@ -13,7 +14,6 @@ import {
 
 const EMISSOR_ESPERADO =
   Cypress.env('emissor') || 'ACOS FAVORIT DISTRIBUIDORA LTDA';
-const ROTA_CATALOGO = '/purchase/long-steel/commerce/catalog';
 
 describe('Compra por Histórico', () => {
   beforeEach(() => {
@@ -48,10 +48,8 @@ describe('Compra por Histórico', () => {
      * Sem `data-testid` confiável, usamos fallback pelo catálogo (mesmo emissor já
      * selecionado) para completar o E2E até a confirmação do pedido.
      */
-    allure.step('Fallback: acessa catálogo da vitrine para efetivar a compra', () => {
-      cy.visit(ROTA_CATALOGO);
-      cy.url({ timeout: STEP_TIMEOUT }).should('include', ROTA_CATALOGO);
-      aguardarTela('catálogo carregado para fallback');
+    allure.step('Fallback: catálogo da vitrine com emissor (evita visit direto sem contexto)', () => {
+      acessarCatalogoVitrineComEmissor(EMISSOR_ESPERADO);
     });
 
     allure.step('Adiciona o primeiro produto ao carrinho', () => {

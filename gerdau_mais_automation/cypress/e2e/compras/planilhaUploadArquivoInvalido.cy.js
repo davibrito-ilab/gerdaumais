@@ -1,11 +1,6 @@
 import * as allure from 'allure-js-commons';
 import { limparSessao, realizarLoginComRetry } from '../../support/helpers/auth';
-import {
-  STEP_TIMEOUT,
-  acessarComprarLanding,
-  selecionarEmissorDoPedido,
-  clicarBotaoPorTexto,
-} from '../../support/helpers/fluxoCompra';
+import { STEP_TIMEOUT, navegarTelaSpreadsheetComEmissor } from '../../support/helpers/fluxoCompra';
 
 const EMISSOR = Cypress.env('emissor') || 'ACOS FAVORIT DISTRIBUIDORA LTDA';
 
@@ -21,10 +16,7 @@ describe('Planilha — upload arquivo inválido', () => {
 
   it('@negative @p2 Rejeita arquivo que não é planilha (ex.: .txt)', { retries: 0 }, () => {
     allure.step('Abre tela de planilha', () => {
-      acessarComprarLanding();
-      selecionarEmissorDoPedido(EMISSOR);
-      clicarBotaoPorTexto('Comprar por Planilha', /comprar\s+por\s+planilha/i);
-      cy.url({ timeout: STEP_TIMEOUT }).should('match', /\/spreadsheet/i);
+      navegarTelaSpreadsheetComEmissor(EMISSOR);
     });
 
     allure.step('Anexa .txt em input file, se existir', () => {

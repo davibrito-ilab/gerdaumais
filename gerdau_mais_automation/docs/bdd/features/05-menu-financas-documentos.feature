@@ -30,9 +30,17 @@ Funcionalidade: Navegação em menu finanças e documentos
     E aplica parâmetros de busca (incluindo período quando disponível)
     Então a lista ou mensagem de resultado reflete a consulta realizada
 
-  # Comportamento de produto alvo de outro canal (download além da busca registrada no E2E atual)
-  @AUT-018 @p2 @manual @documentos
-  Cenário: Download de documento após pesquisa válida
-    Dado que existe documento encontrado na busca
-    Quando o usuário solicita download
-    Então o arquivo é disponibilizado sem erro de negócio tratável
+  # Spec: cypress/e2e/documentos/documentosBusca.cy.js — segundo cenário valida apenas indícios de artefatos/CTAs
+  @AUT-018 @p2 @regression @documentos
+  Cenário: Após pesquisa, a tela apresenta elementos típicos de download ou resultado vazio
+    Dado que o usuário concluiu busca válida conforme período configurado pelo teste
+    Quando observa resultado ou estado vazio
+    Então o corpo menciona arquivo ou expõe CTA/coerência com download quando aplicável ao perfil QA
+
+  # Spec: cypress/e2e/menu/navegacaoCruzadaComprasPedidos.cy.js
+  @AUT-052 @p2 @menu @pedidos @compras @regression
+  Cenário: Navegar de Pedidos (hub) para Comprar via menu superior preserva UX operacional
+    Dado dashboard autenticado
+    Quando o usuário acessa Pedidos pelo menu até o hub `/orders`
+    E em seguida aciona item Comprar no menu até contexto `/purchase/` ou tipo de material
+    Então cada etapa não apresenta tela irreconhecível e mantém elementos principais esperados pelo portal

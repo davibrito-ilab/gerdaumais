@@ -1,170 +1,204 @@
 # Gerdau Mais Automation
 
-Automação E2E da plataforma Gerdau Mais com Cypress.
+Automação E2E da plataforma Gerdau Mais com **Cypress**.
 
-Este guia foi escrito para qualquer pessoa conseguir rodar os testes, mesmo sem experiência prévia no projeto.
+Este guia serve para qualquer pessoa **clonar, configurar credenciais e executar os testes** sem conhecer o histórico do projeto.
+
+---
+
+## Guia rápido (primeira execução)
+
+1. Instale **[Node.js 18 ou superior](https://nodejs.org/)** (no Windows, pode marcar a opção de instalar as ferramentas necessárias). Confirme no terminal:
+
+   ```bash
+   node -v
+   npm -v
+   ```
+
+2. Abra o terminal **na pasta do projeto** onde está este `README.md` (`gerdau_mais_automation/`).
+
+   **PowerShell no Windows:** se o caminho tiver espaços ou parênteses, use aspas ao mudar de pasta:
+
+   ```powershell
+   Set-Location "C:\caminho\para\gerdau_mais_automation"
+   ```
+
+3. Instale as dependências **nesta pasta** (é aqui que o Cypress e os pacotes ficam instalados):
+
+   ```bash
+   npm install
+   ```
+
+   Na **raiz de um monorepo** onde existe um `package.json` “atalho”: esse ficheiro **não** traz dependências do Cypress por si; quem conta é sempre **`npm install` dentro de `gerdau_mais_automation/`**.
+
+4. Copie as variáveis de ambiente de exemplo para o ficheiro real **(obrigatório para login)**
+
+   **Git Bash / macOS / Linux**
+
+   ```bash
+   cp cypress.env.example.json cypress.env.json
+   ```
+
+   **PowerShell (Windows)**
+
+   ```powershell
+   Copy-Item cypress.env.example.json cypress.env.json
+   ```
+
+5. Abra **`cypress.env.json`** num editor de texto e preencha pelo menos **`username`** e **`password`** com uma conta válida no **QA**. Ajuste também **`emissor`** e **`produto`** conforme dados que o QA/equipa lhe indicar (`cypress.config.js` define valores por omissão, mas uma conta específica pode exigir outro emissor na lista).
+
+6. Valide que o Cypress está bem instalado (opcional, mas recomendado na primeira vez):
+
+   ```bash
+   npx cypress verify
+   ```
+
+7. Execute **um conjunto pequeno** para ver se a configuração funciona:
+
+   ```bash
+   npm run cy:run:login
+   ```
+
+   Se aparecer resultado “passing” para os testes de login, está pronto para correr outros scripts (ver secção seguinte).
+
+**Ambiente alvo**
+
+- **`baseUrl`** (QA): **`https://qa.gab.egerdau.com.br`** (`cypress.config.js`).
+- Ligação estável ao QA e conta com permissões de uso no portal são necessárias para a suíte completa passar.
+
+---
 
 ## 1) O que este projeto faz
 
-- Executa testes de ponta a ponta (E2E) no ambiente QA.
-- Valida fluxos críticos como login, compras e pedidos.
-- Gera evidências de execução (screenshots e relatório Allure).
+- Executa testes de ponta a ponta (E2E) no ambiente **QA**.
+- Valida fluxos críticos: login, compras, pedidos, menu, finanças e documentos.
+- **Inventário:** **40** ficheiros `*.cy.js`, **55** casos `it` (detalhes em [`docs/RELATORIO-AUTOMACAO-E2E-TEXTO-COMPLETO.md`](docs/RELATORIO-AUTOMACAO-E2E-TEXTO-COMPLETO.md)).
+- Gera vídeo (opcional), **screenshots** em falhas e integração opcional com **Allure**.
 
-## 2) Estrutura do repositório
+---
 
-Este projeto usa uma estrutura em dois níveis:
+## 2) Duas formas de correr comandos npm
 
-- pasta raiz: scripts de atalho para quem executa o projeto
-- pasta `gerdau_mais_automation`: código principal dos testes
+### Forma recomendada (mais simples)
 
-### Estrutura principal
+Sempre estar **dentro** de `gerdau_mais_automation/`:
 
-```txt
-gerdau_mais_automation/
-  scripts/
-    allure-cli.js
-  cypress/
-    e2e/
-      auth/
-      compras/
-      pedidos/
-    pages/
-    support/
-      helpers/
-  cypress.config.js
-  cypress.env.example.json
-  package.json
-docs/
-  matriz-cenarios-automacao.md
-  ALLURE.md
+```bash
+npm run cy:open
+npm run cy:run:login
+npm run cy:run:fast
 ```
+
+### Raiz do monorepo
+
+Se existir um `package.json` na pasta **acima**, alguns comandos apenas fazem `cd gerdau_mais_automation && …`. Também funcionam desde que já tenha corrido **`npm install` dentro de `gerdau_mais_automation`**.
+
+Na raiz:
+
+```bash
+npm run cy:run:login
+```
+
+---
 
 ## 3) Pré-requisitos
 
-- Node.js 18+ (recomendado 20+)
-- npm
-- Java (JRE 8+) para gerar o relatório Allure (`npm run allure:generate`)
-- Acesso ao ambiente QA
+| Item | Obrigatório? | Nota |
+|------|---------------|------|
+| **Node.js 18+** (recomendado 20+ ou 22) | Sim | LTS suficiente. |
+| **npm** | Sim | Vem com o Node. |
+| **Credenciais QA** válidas (`cypress.env.json`) | Sim | Sem isto falha logo no login. |
+| **Rede até o QA** | Sim | Testes navegam contra `baseUrl`. |
+| **Java (JRE 8+)** | Só para Allure HTML | Opcional só para relatório completo (`npm run allure:generate`). |
+| **Google Chrome instalado** | Recomendado | Para `npm run cy:run:headed` ou `*:headed:fast`. Por omissão a suíte usa **Electron (headless)**. |
 
-## 4) Setup inicial (passo a passo)
+Variáveis de ambiente são lidas assim:
 
-### Passo 1 - Instalar dependências
+1. **`cypress.env.json`** (não vai para o Git por ser segredo).
+2. Prefijo **`CYPRESS_`** nas variáveis de ambiente (ex.: CI com `CYPRESS_username`).
+3. Fallbacks declarados em `cypress.config.js` → secção **`env`** (ex.: URLs de login/token).
 
-Na pasta raiz do workspace:
+Opcional útil nos testes de planilha (2 linhas): em `cypress.env.json`, **`planilha_2_linhas_strict`** — `false` mantém comportamento permissivo/`skip`; `true` exige evidência forte na grade (ver exemplo em [`cypress.env.example.json`](cypress.env.example.json)).
 
-```bash
-npm install
-cd gerdau_mais_automation
-npm install
+---
+
+## 4) Estrutura (resumo)
+
+```txt
+gerdau_mais_automation/
+  cypress.config.js           # baseUrl QA, timeouts, env default
+  cypress.env.example.json    # modelo — copiar → cypress.env.json
+  cypress.env.json           # ⚠ você cria este ficheiro (local, não commitar)
+  cypress/e2e/               # specs .cy.js
+  cypress/pages/             # Page objects
+  cypress/support/           # comandos globais + helpers + e2e.js (Allure)
+  package.json               # todos os npm run cy:* e allure:*
+docs/                        # guias de cobertura, Allure, BDD…
 ```
 
-### Passo 2 - Configurar variáveis locais
-
-Na pasta `gerdau_mais_automation`, crie o arquivo `cypress.env.json` usando o exemplo:
-
-```json
-{
-  "username": "seu.usuario@empresa.com",
-  "password": "sua-senha",
-  "invalidUsername": "usuario.invalido@empresa.com",
-  "invalidPassword": "senha-invalida",
-  "emissor": "ACOS FAVORIT DISTRIBUIDORA LTDA.",
-  "produto": "106040273",
-  "auth_client_id": "seu-client-id",
-  "auth_client_secret": "seu-client-secret",
-  "auth_token_url": "https://gerdau-authentications.us-e1.cloudhub.io/api/token",
-  "auth_login_url": "https://qa-experience-gerdau-gmais-login.us-e1.cloudhub.io/api/v1/login"
-}
-```
-
-> Importante: não versionar `cypress.env.json` (arquivo local com segredos).
+---
 
 ## 5) Comandos mais usados
 
-> Você pode rodar pela raiz ou pela pasta interna.  
-> Abaixo estão os comandos da pasta raiz.
+Correr **dentro de `gerdau_mais_automation/`**:
 
-- Abrir Cypress (modo visual): `npm run cy:open`
-- Rodar tudo: `npm run cy:run`
-- Rodar login: `npm run cy:run:login`
-- Rodar compras: `npm run cy:run:compras`
-- Rodar suíte crítica P0: `npm run cy:run:p0`
-- Rodar suíte P1 estável (Pedidos): `npm run cy:run:p1`
-- Rodar P1 opcional (instável por ambiente): `npm run cy:run:p1-compras-opcional`
-- Rodar P0 + P1 estável: `npm run cy:run:p0-p1`
+| Para quê… | Comando |
+|-----------|---------|
+| **Primeira validação (só login)** | `npm run cy:run:login` |
+| Abrir modo interativo (escolher spec no browser Cypress) | `npm run cy:open` |
+| Rodar **toda** a suíte (com vídeo) | `npm run cy:run` |
+| Mesma coisa mas **sem vídeo** (mais rápido) | `npm run cy:run:fast` |
+| Smoke (login + vitrine + histórico) | `npm run cy:run:smoke` (alias de `cy:run:smoke-pr`) |
+| Lista completa de scripts | Abrir [`package.json`](package.json) → `"scripts"` |
 
-## 6) Arquitetura de testes (boas práticas aplicadas)
+Gerar **painel HTML Allure** (precisa Java):
 
-- **Page Object Model** para reduzir duplicação em seletores e ações.
-- **Helper de autenticação central** em `cypress/support/helpers/auth.js`.
-- **Configuração por ambiente** via `cypress.env.json` e `CYPRESS_*`.
-- **Tags por criticidade** (`@smoke`, `@critical`, `@regression`, `@p1`).
-- **Fallbacks de resiliência** para lidar com loading/instabilidade do QA.
-- **Relatórios e evidências** com Allure + screenshots em falha.
+```bash
+npm run cy:run
+npm run allure:generate
+npm run allure:open
+```
 
-## 7) Convenções do projeto
+Atalhos: `npm run allure:report`, `npm run allure:serve`. Documentação Pages/CI em [`docs/ALLURE.md`](docs/ALLURE.md).
 
-- Specs terminam com `.cy.js`.
-- Organização por domínio em `cypress/e2e`:
-  - `auth` (autenticação)
-  - `compras` (fluxos de compra)
-  - `pedidos` (módulo de pedidos)
-- Métodos de interação ficam em `cypress/pages/*Metods.js`.
-- O domínio de compra já possui módulos auxiliares internos:
-  - `cypress/pages/comprarPage/comprarPageHelpers.js`
-  - `cypress/pages/comprarPage/comprarPageTipoCompraActions.js`
-  - `cypress/pages/comprarPage/comprarPageCarrinhoBuscaActions.js`
-- Evite colocar regras de negócio direto no spec; prefira abstrair nos pages/helpers.
+Gerar fixtures XLSX de planilhas (opcional):
 
-## 8) Relatório Allure (painel de execuções)
+```bash
+npm run fixtures:planilhas
+```
 
-1. Rodar os testes (gera `allure-results/`):
+---
 
-   ```bash
-   npm run cy:run
-   ```
+## 6) Troubleshooting rápido
 
-2. Gerar o HTML do painel (gera `allure-report/`):
+| Sintoma | O que fazer |
+|---------|--------------|
+| `Defina … username/password` ou login falha | Confirme `cypress.env.json` nesta pasta ou variáveis `CYPRESS_username` / `CYPRESS_password`. |
+| Erro campo **emissor** indisponível | QA instável ou emissor não listado para a conta; alinhar `emissor` com texto exato pedido pela equipa ou voltar a correr quando o QA responder. Ver também `npm run cy:run:headed:fast -- --browser chrome` para debug visual. |
+| Aviso no Windows sobre **“failed to trash”** screenshots/auth | Mensagem benigna para o resultado dos testes; pode ignorar ou limpar pasta `cypress/screenshots` manualmente. |
+| Pasta do projeto dentro de **`Downloads\User (1)`** | Evite problema de caminhos: mova para um caminho mais curto ou use sempre `Set-Location "..."` com aspas. |
+| Cypress / políticas Chrome corporativas | Em alguns PCs o Chrome é bloqueado por políticas; use `cy:run` (Electron headless) ou rode em máquina/VM menos restrita. |
 
-   ```bash
-   npm run allure:generate
-   ```
+Mais detalhe para **CI** (variáveis do pipeline) e alinhamento com o ambiente: ver histórico de alterações em [`docs/ALTERACOES.md`](docs/ALTERACOES.md) e o guia de cobertura.
 
-3. Abrir no navegador:
+---
 
-   ```bash
-   npm run allure:open
-   ```
+## 7) Arquitetura e convenções (resumo)
 
-**Atalhos**
+- **Page Objects** em `cypress/pages/`, especialmente `comprarPageMetods.js` e divisões helper.
+- **Helpers** transversais: `cypress/support/helpers/auth.js`, `fluxoCompra.js`, etc.
+- Specs só em **`cypress/e2e/*/…cy.js`**.
+- Mais detalhe: [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md), [`GUIA-COBERTURA-AUTOMACAO-E2E.md`](GUIA-COBERTURA-AUTOMACAO-E2E.md).
 
-- `npm run cy:run:allure` — roda a suíte e gera o relatório em seguida.
-- `npm run allure:report` — `allure:generate` + `allure:open`.
-- `npm run allure:serve` — sobe o painel direto de `allure-results` (temporário; bom para olhar logo após a execução).
+---
 
-É necessário **Java (JRE)** instalado para o comando Allure. **Painel publicado na internet:** veja GitHub Actions + Pages em [`docs/ALLURE.md`](docs/ALLURE.md#painel-online-github-pages).
+## 8) Matriz / roadmap negócio
 
-**Primeiro envio para o GitHub (instalar Git, `remote`, token, segredos do Actions):** [`docs/GITHUB.md`](docs/GITHUB.md).
+[`docs/matriz-cenarios-automacao.md`](docs/matriz-cenarios-automacao.md).
 
-## 9) Troubleshooting (problemas comuns)
+---
 
-### Erro: `Defina CYPRESS_username e CYPRESS_password`
-- Falta configuração no `cypress.env.json` ou variáveis de ambiente.
+## 9) GitHub e painel público Allure
 
-### Erro: campo de emissor não disponível
-- Instabilidade do QA.
-- Reexecutar a suíte (há retries e fallback já implementados).
-- Priorizar execução no Chrome (`--browser chrome`), que está mais estável no projeto.
-
-### Teste passa local e falha no CI
-- Verificar variáveis de ambiente do pipeline.
-- Confirmar acesso de rede ao ambiente QA.
-- Validar dados de emissor/produto no ambiente de execução.
-
-## 10) Roadmap de automação
-
-A matriz de cenários está em:
-
-- `docs/matriz-cenarios-automacao.md`
-
-Ela define prioridade P0/P1/P2/P3 e orienta a evolução da suíte por risco de negócio.
+- **`docs/GITHUB.md`** — primeiro `push`, token, Actions.
+- **`docs/ALLURE.md`** — relatório online (GitHub Pages).

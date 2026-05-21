@@ -108,7 +108,7 @@ Indicado quando você já tem o workflow no GitHub e quer **gerar o painel agora
 9. Ao terminar com sucesso, a **URL do site** costuma aparecer:
    - No job **deploy**, na seção do ambiente **github-pages**, ou
    - Em **Settings → Pages** (endereço do site publicado).
-10. Padrão de URL: `https://<dono>.github.io/<repo>/` — ex.: organização/usuário `davibrito-ilab` e repo `gerdau` → `https://davibrito-ilab.github.io/gerdau/`.
+10. Padrão de URL: `https://<dono>.github.io/<repo>/` — relatório publicado deste projeto: **[https://davibrito-ilab.github.io/gerdaumais/](https://davibrito-ilab.github.io/gerdaumais/#)** (o `#` no final é o hash padrão do Allure no navegador).
 
 **Observações**
 
@@ -155,7 +155,11 @@ Após o primeiro deploy bem-sucedido, a URL aparece no job **deploy** e segue o 
 
 `https://<dono>.github.io/<repositorio>/`
 
-(O relatório Allure usa caminhos relativos; em subcaminho `/repo/` o painel costuma abrir corretamente. Se algo quebrar, use um domínio customizado ou hospede `allure-report/` na raiz de um site.)
+**Instância atual (GitHub Pages):** [https://davibrito-ilab.github.io/gerdaumais/](https://davibrito-ilab.github.io/gerdaumais/#)
+
+Para **atualizar** esse site com uma nova execução Allure, não basta alterar arquivos locais: é preciso **disparar o workflow** no GitHub (aba **Actions** → **Allure — publicar painel (GitHub Pages)** → **Run workflow**) ou dar **push** em `main`/`master` com mudanças sob `gerdau_mais_automation/**` (o push roda a suíte `cy:run:smoke-pr` por padrão; para regressão completa use **Run workflow** e escolha `cy:run` ou `cy:run:regression-nightly`).
+
+(O relatório Allure usa caminhos relativos; em subcaminho `/gerdaumais/` o painel costuma abrir corretamente. Se algo quebrar, use um domínio customizado ou hospede `allure-report/` na raiz de um site.)
 
 ### Falhas nos testes
 
@@ -169,6 +173,18 @@ Qualquer hospedagem de arquivos estáticos serve: faça upload da pasta `allure-
 
 - Artefatos: `allure-results/` (após o Cypress) e/ou `allure-report/` (após `allure:generate`).
 - Em outros pipelines, execute `npm run allure:generate` e publique `allure-report/` como site estático ou anexe o zip como artefato.
+
+## Cypress, `allure-cypress` e DOM muito grande
+
+O `allure-cypress` pode serializar o **valor / subject** de comandos; em páginas com árvores enormes ou `JSON.stringify` de estruturas com referências enormes pode ocorrer **`RangeError: Invalid string length`** ou erro de estrutura circular (ex.: fibras React no DOM).
+
+Neste projeto, **`cypress/support/e2e.js`** (antes do `import 'allure-cypress'`) inclui mitigações de último recurso:
+
+- **`JSON.stringify`** com `try/catch`: em `RangeError` / texto “invalid string length” devolve um placeholder curto para o relatório não abortar.
+- **`Cypress.dom.stringify`**: trunca strings gigantes (~120k) e omite texto em caso de limite (`Invalid string length`).
+- **`uncaught:exception`**: ignora erro de mensagem relacionada a “Converting circular structure to JSON” com `__reactFiber$`, para não falhar o spec só por relatório/step.
+
+**Não** há opção oficial do plugin (v3.x) aqui configurada como “truncar sempre”; o comportamento esperado nos releases futuros deve ser conferido no changelog do **`allure-cypress`**.
 
 ## Referência
 

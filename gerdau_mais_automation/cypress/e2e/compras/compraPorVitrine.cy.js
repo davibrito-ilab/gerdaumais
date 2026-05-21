@@ -1,12 +1,8 @@
 import ComprarPage from '../../pages/comprarPage/comprarPageMetods';
-import * as allure from 'allure-js-commons';
 import { limparSessao, realizarLoginComRetry } from '../../support/helpers/auth';
 import {
   STEP_TIMEOUT,
-  acessarComprarLanding,
-  selecionarEmissorDoPedido,
-  clicarBotaoPorTexto,
-  aguardarTela,
+  acessarCatalogoVitrineComEmissor,
   irParaCarrinhoViaHeader,
   finalizarPedidoNoCarrinho,
 } from '../../support/helpers/fluxoCompra';
@@ -19,39 +15,23 @@ describe('Compra por Vitrine', () => {
     limparSessao();
     cy.on('uncaught:exception', () => false);
 
-    allure.step('Realizar login', () => {
-      realizarLoginComRetry();
-    });
+    cy.log('↪ Realizar login');
+    realizarLoginComRetry();
   });
 
   it('@smoke @critical Comprar Por Vitrine', { retries: 0 }, function () {
-    allure.step('Acessa a área de Comprar (mesma rota do menu superior)', () => {
-      acessarComprarLanding();
-    });
+    cy.log(`Landing → emissor → catálogo (vitrine) — "${EMISSOR_ESPERADO}"`);
+    acessarCatalogoVitrineComEmissor(EMISSOR_ESPERADO);
+    cy.url({ timeout: STEP_TIMEOUT }).should('include', '/purchase/long-steel/commerce/catalog');
 
-    allure.step(`Seleciona emissor "${EMISSOR_ESPERADO}"`, () => {
-      selecionarEmissorDoPedido(EMISSOR_ESPERADO);
-      aguardarTela('emissor confirmado, cards habilitados');
-    });
+    cy.log('Adiciona o primeiro produto ao carrinho (emissor já aplicado na landing)');
+    ComprarPage.adicionarPrimeiroProdutoDaListaAoCarrinho({ skipEmissorRecover: true });
+    cy.screenshot('vitrine-confirmacao-adicionado-carrinho');
 
-    allure.step('Clica no botão "Comprar por Vitrine"', () => {
-      clicarBotaoPorTexto('Comprar por Vitrine', /comprar\s+por\s+vitrine/i);
-      cy.url({ timeout: STEP_TIMEOUT }).should('include', '/purchase/long-steel/commerce/catalog');
-      aguardarTela('catálogo da vitrine carregado');
-    });
+    irParaCarrinhoViaHeader(ComprarPage);
 
-    allure.step('Adiciona o primeiro produto ao carrinho', () => {
-      ComprarPage.adicionarPrimeiroProdutoDaListaAoCarrinho();
-      cy.screenshot('vitrine-confirmacao-adicionado-carrinho');
-    });
-
-    allure.step('Clica no ícone do carrinho no header superior direito', () => {
-      irParaCarrinhoViaHeader(ComprarPage);
-    });
-
-    allure.step('Avança pelo carrinho, preenche data e finaliza o pedido', () => {
-      finalizarPedidoNoCarrinho();
-      cy.screenshot('vitrine-pedido-efetivado');
-    });
+    cy.log('⏳ Checkout: datas + finalizar pedido');
+    finalizarPedidoNoCarrinho();
+    cy.screenshot('vitrine-pedido-efetivado');
   });
 });

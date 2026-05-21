@@ -1,5 +1,6 @@
 import { aguardarBodyVisivel } from './uiReady';
 import { aguardarOverlaysInvisiveis } from '../../pages/comprarPage/comprarPageHelpers';
+import { REGEX_INDICIOS_ETAPA_REVISAR_PEDIDO } from './fluxoCompra';
 
 /**
  * Evidência forte de estar na etapa do carrinho (não confundir com “carrinho” só no header do catálogo).
@@ -85,11 +86,7 @@ export const finalizarPedidoE2E = (ComprarPage) => {
   aguardarBodyVisivel(30000);
   aguardarOverlaysInvisiveis(overlayWait);
 
-  cy.contains(
-    'body',
-    /revis(ar|ão)\s+pedido|revis(ar|ao)\s+pedido|step\s*3\s+de\s+4|step\s*3\s+of\s+4|step\s*3\s*\/\s*4|etapa\s*3|confer(ência|encia)\s+do\s+pedido|confirmar\s+dados|revis(ão|ao)\s+da\s+compra/i,
-    { timeout: stepTimeout }
-  ).should('be.visible');
+  cy.contains('body', REGEX_INDICIOS_ETAPA_REVISAR_PEDIDO, { timeout: stepTimeout }).should('be.visible');
   ComprarPage.clicarEmBotaoInk();
   aguardarBodyVisivel(30000);
   aguardarOverlaysInvisiveis(overlayWait);

@@ -4,6 +4,7 @@ import { limparSessao, realizarLoginComRetry } from '../../support/helpers/auth'
 import {
   STEP_TIMEOUT,
   acessarComprarLanding,
+  acessarCatalogoVitrineComEmissor,
   selecionarEmissorDoPedido,
   clicarBotaoPorTexto,
   aguardarTela,
@@ -13,7 +14,6 @@ import {
 
 const EMISSOR_ESPERADO =
   Cypress.env('emissor') || 'ACOS FAVORIT DISTRIBUIDORA LTDA';
-const ROTA_CATALOGO = '/purchase/long-steel/commerce/catalog';
 const TERMO_INEXISTENTE = 'ZZZ_PRODUTO_INEXISTENTE_99999';
 
 describe('Busca de produtos', () => {
@@ -25,7 +25,7 @@ describe('Busca de produtos', () => {
     });
   });
 
-  it('@regression @p1 Busca sem resultados exibe estado adequado', { retries: 0 }, () => {
+  it('@smoke @p1 @regression Busca sem resultados exibe estado adequado', { retries: 0 }, () => {
     allure.step('Acessa landing de Comprar e seleciona emissor', () => {
       acessarComprarLanding();
       selecionarEmissorDoPedido(EMISSOR_ESPERADO);
@@ -49,12 +49,26 @@ describe('Busca de produtos', () => {
       ComprarPage.validarMensagemBuscaSemResultados();
       cy.screenshot('busca-sem-resultados');
     });
+  });
 
-    allure.step('Conclui compra efetivada via catálogo após cenário sem resultados', () => {
-      cy.visit(ROTA_CATALOGO);
-      cy.url({ timeout: STEP_TIMEOUT }).should('include', ROTA_CATALOGO);
-      aguardarTela('catálogo carregado');
+  /** E2E separado para não mascara falhas do comportamento principal de estado vazio. */
+  it('@regression @p2 Após cenário sem resultados — compra rápida via vitrine fecha pedido', { retries: 0 }, () => {
+    allure.step('Landing + emissor + busca sem resultados', () => {
+      acessarComprarLanding();
+      selecionarEmissorDoPedido(EMISSOR_ESPERADO);
+      aguardarTela('emissor confirmado, cards habilitados');
+      clicarBotaoPorTexto(
+        'Comprar selecionando itens',
+        /comprar\s+selecionando\s+itens/i
+      );
+      cy.url({ timeout: STEP_TIMEOUT }).should('include', '/search-items');
+      aguardarTela('página de busca de itens carregada');
+      ComprarPage.buscarTextoSemValidarResultado(TERMO_INEXISTENTE);
+      ComprarPage.validarMensagemBuscaSemResultados();
+    });
 
+    allure.step('Fluxo paralelo até envio efetivo (valida checkout)', () => {
+      acessarCatalogoVitrineComEmissor(EMISSOR_ESPERADO);
       ComprarPage.adicionarPrimeiroProdutoDaListaAoCarrinho();
       irParaCarrinhoViaHeader(ComprarPage);
       finalizarPedidoNoCarrinho();

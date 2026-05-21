@@ -1,5 +1,9 @@
 import { aguardarBodyVisivel, recarregarPaginaEAguardar } from '../../support/helpers/uiReady';
 import { aguardarOverlaysInvisiveis } from './comprarPageHelpers';
+import {
+  REGEX_CTA_COMPRAR_CORTE_OU_FABRICACAO,
+  ROTA_FABRICACAO_IDENTIFICACAO_OBRA,
+} from '../../support/helpers/fluxoCompra';
 
 export const selecionaComprarVitrineAction = () => {
   cy.log('✅ Selecionando Comprar por Vitrine');
@@ -99,7 +103,7 @@ export const selecionaComprarHistoricoAction = () => {
     }
 
     cy.get('body').then(($body) => {
-      const possuiOpcaoHistorico = /hist[oó]rico/i.test($body.text());
+      const possuiOpcaoHistorico = /hist[oó]rico/i.test($body.text() || '');
       if (!possuiOpcaoHistorico) {
         cy.log('⚠️ Opção Histórico não encontrada na UI atual; seguindo fluxo de compra já disponível.');
         return;
@@ -111,6 +115,65 @@ export const selecionaComprarHistoricoAction = () => {
         .click({ force: true });
     });
   });
+};
+
+/** Corte e dobra → rotas sob `/purchase/fabrication/*` após seleção na landing (ou fallback por visit). */
+export const selecionaComprarCorteEDobraAction = () => {
+  const seletorCtaLargo =
+    'button, [role="button"], [role="tab"], [role="link"], .hefesto-button, span.hefesto-button__label, a[href], input[type="submit"], input[type="button"]';
+
+  const textoAcumuladoParaMatch = (el) =>
+    String(
+      [
+        el.textContent,
+        el.getAttribute && el.getAttribute('aria-label'),
+        el.getAttribute && el.getAttribute('title'),
+        el.getAttribute && el.getAttribute('value'),
+        typeof el.value === 'string' ? el.value : '',
+      ]
+        .filter(Boolean)
+        .join(' ')
+    );
+
+  cy.log('✅ Selecionando Comprar tipo Corte e dobra / fabricação');
+  aguardarBodyVisivel(30000);
+
+  cy.url({ timeout: 20000 })
+    .then((url) => {
+      if (String(url || '').includes('/purchase/fabrication')) {
+        cy.log('✅ Já está no fluxo de fabricação (corte e dobra)');
+        return undefined;
+      }
+
+      return cy.then(() => {
+        const textoBody = String(Cypress.$('body').text() || '');
+        if (!REGEX_CTA_COMPRAR_CORTE_OU_FABRICACAO.test(textoBody)) {
+          cy.log('⚠️ Texto de Corte/dobra ausente — rota direta.');
+          cy.visit(ROTA_FABRICACAO_IDENTIFICACAO_OBRA);
+          return;
+        }
+
+        const candidatos = [...Cypress.$(seletorCtaLargo)].filter((el) => Cypress.dom.isVisible(el));
+        const alvo = candidatos.find((el) =>
+          REGEX_CTA_COMPRAR_CORTE_OU_FABRICACAO.test(textoAcumuladoParaMatch(el))
+        );
+
+        if (!alvo) {
+          cy.log('⚠️ Sem CTA clicável — rota direta de identificação de obra.');
+          cy.visit(ROTA_FABRICACAO_IDENTIFICACAO_OBRA);
+          return;
+        }
+
+        cy.wrap(alvo).scrollIntoView().click({ force: true });
+      });
+    })
+    .then(() => {
+      aguardarOverlaysInvisiveis(45000);
+      cy.url({ timeout: 30000 }).should(
+        (href) => typeof href === 'string' && href.includes('/purchase/fabrication')
+      );
+      cy.log('✅ Corte e dobra — rota de fabricação confirmada');
+    });
 };
 
 const ROTULO_CTA_INK =

@@ -1,7 +1,19 @@
 import { recarregarPaginaEAguardar } from '../../support/helpers/uiReady';
+import {
+  ROTA_COMPRAR_LANDING,
+  STEP_TIMEOUT,
+  aguardarFimCarregamentoTextual,
+} from '../../support/helpers/fluxoCompra';
+
+/** Preferência antes de `[role=combobox]` genérico (ex.: busca no catálogo). */
+const SELETORES_EMISSOR_PREFERIDOS = [
+  '#select-emissor-pedido',
+  'input[placeholder*="Emissor"]',
+  '[data-testid="hefesto-select-container"]',
+];
 
 export const SELETOR_CAIXA_EMISSOR =
-  '[data-testid="hefesto-select-container"], #select-emissor-pedido, input[placeholder*="Emissor"], [role="combobox"], [class*="select-container"]';
+  '#select-emissor-pedido, [data-testid="hefesto-select-container"], input[placeholder*="Emissor"], [role="combobox"], [class*="select-container"]';
 
 const normalizar = (txt = '') =>
   txt
@@ -11,7 +23,41 @@ const normalizar = (txt = '') =>
     .trim();
 
 const campoEmissorDisponivel = (timeout = 30000) =>
-  cy.get('body', { timeout }).then(($body) => $body.find(SELETOR_CAIXA_EMISSOR).length > 0);
+  cy.get('body', { timeout }).then(($body) => {
+    const el = $body.get(0);
+    const win = el && el.ownerDocument && el.ownerDocument.defaultView;
+    const href = win ? `${win.location.pathname || ''}${win.location.search || ''}` : '';
+    const textoBody = ($body.text() || '').replace(/\u00a0/g, ' ');
+
+    const landingCompras =
+      /steel-type-choose|\bsteel-type\b/i.test(href) ||
+      /\btipo\s+de\b.*\bac\b|\btipo\s+de\s+material\b|escolha.*tipo.*a[cç]/i.test(textoBody);
+
+    const preferido =
+      SELETORES_EMISSOR_PREFERIDOS.some((sel) => $body.find(sel).length > 0) ||
+      $body.find('#select-emissor-pedido').length > 0;
+
+    if (preferido) return true;
+
+    const rotaSóComboboxoGenericoSuspeito =
+      /\/commerce\/catalog|\/spreadsheet|\bshopping-cart\b|\/search-items/i.test(href);
+
+    const textoSugereEmissor = /emissor\s+do\s+pedido|selecione\s+um\s+emissor/i.test(textoBody);
+
+    if (landingCompras || (!rotaSóComboboxoGenericoSuspeito && textoSugereEmissor)) {
+      const combos =
+        [...$body.find(SELETOR_CAIXA_EMISSOR)].some((el2) => Cypress.dom.isVisible(el2)) ||
+        ($body.find('[role="combobox"]:visible').length > 0 && textoSugereEmissor);
+      return Boolean(combos);
+    }
+
+    if (!rotaSóComboboxoGenericoSuspeito) {
+      const visiveis = [...$body.find(SELETOR_CAIXA_EMISSOR)].filter((el2) => Cypress.dom.isVisible(el2));
+      if (visiveis.length >= 1) return true;
+    }
+
+    return false;
+  });
 
 const aguardarCampoEmissorVisivel = (timeout = 90000) => {
   cy.log(`⏳ Aguardando campo de emissor ficar visível (até ${Math.round(timeout / 1000)}s)`);
@@ -19,24 +65,33 @@ const aguardarCampoEmissorVisivel = (timeout = 90000) => {
 };
 
 export const selecionaEmissorCorretamenteAction = (emissor = Cypress.env('emissor')) => {
-  // Regra: não avançar sem o campo de emissor disponível/visível.
-  // Se o QA estiver lento ou renderizar seletor depois, aguardamos (com retries via reload).
+  // Catálogo / carrinho muitas vezes não rendem `#select-emissor-pedido` — só na landing » Comprar.
   campoEmissorDisponivel(30000).then((okInicial) => {
-    if (okInicial) return;
+    if (!okInicial) {
+      cy.log('⚠️ Emissor não está nesta rota ou a página ainda carregando — navegando para landing Comprar.');
+      cy.visit(ROTA_COMPRAR_LANDING, { failOnStatusCode: false });
+      cy.url({ timeout: STEP_TIMEOUT }).should('include', '/steel-type-choose');
+      aguardarFimCarregamentoTextual(STEP_TIMEOUT);
+    }
+    return campoEmissorDisponivel(30000);
+  }).then((okDepoisLanding) => {
+    if (okDepoisLanding) return;
 
-    cy.log('⚠️ Campo de emissor não apareceu. Recarregando página (1/2).');
+    cy.log('⚠️ Campo de emissor ainda não visível na landing; recarga (1/2).');
     recarregarPaginaEAguardar(30000);
-    return campoEmissorDisponivel(30000).then((okAposPrimeiroReload) => {
-      if (okAposPrimeiroReload) return;
+    return campoEmissorDisponivel(30000);
+  }).then((ok1) => {
+    if (ok1) return;
 
-      cy.log('⚠️ Campo de emissor ainda indisponível. Recarregando página (2/2).');
-      recarregarPaginaEAguardar(30000);
-      return campoEmissorDisponivel(30000).then((okFinal) => {
-        if (!okFinal) {
-          throw new Error('Campo de emissor não ficou disponível após retries. Abortando para evitar flakiness por falta de sync.');
-        }
-      });
-    });
+    cy.log('⚠️ Recarga landing (2/2).');
+    recarregarPaginaEAguardar(30000);
+    return campoEmissorDisponivel(30000);
+  }).then((okFinal) => {
+    if (!okFinal) {
+      throw new Error(
+        'Campo de emissor não ficou disponível após landing + recargas. Verifique QA e `emissor` no cypress.env.'
+      );
+    }
   });
 
   aguardarCampoEmissorVisivel(90000);
